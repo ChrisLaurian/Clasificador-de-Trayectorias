@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Loader2, AlertTriangle, LogIn, UserPlus } from 'lucide-react';
-import { login, register, errMsg } from '../api/client';
+import { login, register, errMsg, me } from '../api/client';
 
 export default function LoginPage() {
   const [modo, setModo] = useState('login'); // login | registro
@@ -11,6 +11,13 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Si ya hay sesión (o modo invitado), no hace falta entrar de nuevo.
+  useEffect(() => {
+    me()
+      .then(() => navigate('/', { replace: true }))
+      .catch(() => {});
+  }, [navigate]);
 
   const cambiarModo = (m) => {
     setModo(m);

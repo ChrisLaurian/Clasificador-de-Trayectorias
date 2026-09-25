@@ -11,7 +11,7 @@ const uploadRouter = require('./routes/upload');
 const documentsRouter = require('./routes/documents');
 const exportRouter = require('./routes/export');
 const db = require('./data/db');
-const { requireAuth } = require('./middleware/auth');
+const { requireAuth, isAuthDisabled, fallbackUser } = require('./middleware/auth');
 
 const app = express();
 
@@ -32,8 +32,11 @@ app.get('/api/health', (req, res) =>
 // Autenticación (registro abierto, login, logout, sesión actual)
 app.use('/api/auth', authRouter);
 
-// Todo lo demás exige sesión: cada usuario ve sus propios datos
-app.use('/api', requireAuth);
+// Todo lo demás exige sesión: cada usuario ve sus propios datos.
+// Con AUTH_DISABLED=1 se entra en modo invitado (sin login, temporal).
+app.use('/api', (req, res, next) =>
+  (isAuthDisabled() ? fallbackUser : requireAuth)(req, res, next)
+);
 
 app.use('/api/projects', projectsRouter);
 app.use('/api/students', studentsRouter);

@@ -58,4 +58,26 @@ function clearCookie() {
   return 'sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
 }
 
-module.exports = { parseCookies, getToken, requireAuth, sessionCookie, clearCookie };
+// --- Modo temporal sin login (AUTH_DISABLED=1) ---------------------------------
+// Útil para probar la app mientras se resuelve el almacén en producción.
+// Omite la sesión y usa un usuario invitado compartido; el frontend detecta
+// el modo con `authDisabled` en /api/auth/me.
+const FALLBACK_USER = { id: 'anon', username: 'invitado' };
+
+const isAuthDisabled = () => process.env.AUTH_DISABLED === '1';
+
+function fallbackUser(req, res, next) {
+  req.user = FALLBACK_USER;
+  next();
+}
+
+module.exports = {
+  parseCookies,
+  getToken,
+  requireAuth,
+  sessionCookie,
+  clearCookie,
+  FALLBACK_USER,
+  isAuthDisabled,
+  fallbackUser,
+};

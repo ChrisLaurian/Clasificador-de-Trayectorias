@@ -4,7 +4,7 @@ const router = express.Router();
 const db = require('../data/db');
 const asyncHandler = require('../asyncHandler');
 const { hashPassword, verifyPassword } = require('../services/passwords');
-const { getToken, sessionCookie, clearCookie } = require('../middleware/auth');
+const { getToken, sessionCookie, clearCookie, isAuthDisabled, FALLBACK_USER } = require('../middleware/auth');
 
 const USERNAME_RE = /^[A-Za-z0-9._-]{3,32}$/;
 const PASS_MIN = 6;
@@ -30,6 +30,7 @@ async function startSession(req, res, user) {
 router.post(
   '/register',
   asyncHandler(async (req, res) => {
+    if (isAuthDisabled()) throw httpError(403, 'Registro deshabilitado temporalmente (modo invitado)');
     const { username, password } = req.body || {};
     const name = String(username || '').trim();
 
@@ -60,6 +61,7 @@ router.post(
 router.post(
   '/login',
   asyncHandler(async (req, res) => {
+    if (isAuthDisabled()) throw httpError(403, 'Inicio de sesión deshabilitado temporalmente (modo invitado)');
     const { username, password } = req.body || {};
     const user = await db.findUser(String(username || '').trim());
     if (!user || !verifyPassword(String(password || ''), user.passwordHash)) {
@@ -80,10 +82,13 @@ router.post(
   })
 );
 
-// GET /api/auth/me -> usuario de la sesión actual
+// GET /api/auth/me -> usuario de la sesión actual (o invitado si AUTH_DISABLED)
 router.get(
   '/me',
   asyncHandler(async (req, res) => {
+    if (isAuthDisabled()) {
+      return res.json({ user: FALLBACK_USER, authDisabled: true });
+    }
     const token = getToken(req);
     const session = token ? await db.getSession(token) : null;
     const user = session ? await db.getUser(session.userId) : null;

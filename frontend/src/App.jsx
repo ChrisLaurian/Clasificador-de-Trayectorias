@@ -90,15 +90,19 @@ function Shell({ usuario }) {
               <p className="text-sm font-medium text-gray-800 truncate" title={usuario?.username}>
                 {usuario?.username}
               </p>
-              <p className="text-[11px] text-gray-400">Sesión activa</p>
+              <p className="text-[11px] text-gray-400">
+                {usuario?.authDisabled ? 'Modo invitado · sin login' : 'Sesión activa'}
+              </p>
             </div>
-            <button
-              onClick={cerrarSesion}
-              title="Cerrar sesión"
-              className="text-gray-400 hover:text-rose-600 p-2 rounded-lg hover:bg-gray-50"
-            >
-              <LogOut size={16} />
-            </button>
+            {!usuario?.authDisabled && (
+              <button
+                onClick={cerrarSesion}
+                title="Cerrar sesión"
+                className="text-gray-400 hover:text-rose-600 p-2 rounded-lg hover:bg-gray-50"
+              >
+                <LogOut size={16} />
+              </button>
+            )}
           </div>
         </div>
       </aside>

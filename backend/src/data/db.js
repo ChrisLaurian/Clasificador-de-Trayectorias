@@ -337,6 +337,11 @@ async function loadCatalog(uid) {
 
 async function loadStudents(uid) {
   const raw = await readUserStudents(uid);
+  if (raw === null || raw === undefined) {
+    // Sin datos propios aún (p. ej. modo invitado): muestra la semilla.
+    const semilla = readJSONFile(SEED_STUDENTS_FILE);
+    return Array.isArray(semilla) ? semilla : [];
+  }
   return Array.isArray(raw) ? raw : [];
 }
 
