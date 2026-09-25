@@ -89,12 +89,14 @@ usuarios arrancan con una copia del catálogo de `projects.json`.
   (KV en producción, `sessions.json` en local). Logout invalida la sesión.
 - **Protección**: salvo `/api/health` y `/api/auth/*`, toda la API exige sesión
   y responde `401` sin ella; el frontend redirige a `/login` automáticamente.
-- **Modo temporal sin login** (`AUTH_DISABLED=1`): entra en "modo invitado" —
-  `/api/auth/me` devuelve usuario invitado con `authDisabled: true`, register y
-  login responden `403` y todas las rutas son públicas con datos compartidos.
-  Para activarlo: variable de entorno `AUTH_DISABLED=1` (local o Vercel) y
-  reiniciar/redeploy; para reactivar el login, quítala. **Temporal**: pensado
-  para probar la app mientras se resuelve el almacén en producción.
+- **Modo temporal sin login (ACTIVADO por defecto)**: la app entra en "modo
+  invitado" — `/api/auth/me` devuelve el usuario invitado con `authDisabled:
+  true`, register y login responden `403` y todas las rutas son públicas con
+  datos compartidos (usuario `anon`, que ve la semilla de alumnos). Para
+  **reactivar el login**: variable de entorno `AUTH_DISABLED=0` y
+  reiniciar/redeploy. **Temporal**: pensado para probar la app mientras se
+  resuelve el almacén en producción. `/api/health` informa `auth:
+  "disabled" | "enabled"`.
 
 ## Despliegue en Vercel (producción)
 

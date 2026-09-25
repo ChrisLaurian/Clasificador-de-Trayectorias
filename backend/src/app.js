@@ -23,6 +23,7 @@ app.get('/api/health', (req, res) =>
   res.json({
     status: 'ok',
     storage: db.isKV() ? 'kv' : 'json',
+    auth: isAuthDisabled() ? 'disabled' : 'enabled',
     ...(process.env.VERCEL && !db.isKV()
       ? { warning: 'KV no configurado: la escritura fallará (filesystem de solo lectura)' }
       : {}),
