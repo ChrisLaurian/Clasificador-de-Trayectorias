@@ -13,11 +13,11 @@ function safeFileName(name) {
 }
 
 // GET /api/documents/student/:id -> PDF individual
-router.get('/student/:id', async (req, res) => {
-  const student = db.getStudents().find((s) => s.id === req.params.id);
-  if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
-
+router.get('/student/:id', async (req, res, next) => {
   try {
+    const student = db.getStudents().find((s) => s.id === req.params.id);
+    if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
+
     const pdfBuffer = await generateStudentPDF(student);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
@@ -26,13 +26,12 @@ router.get('/student/:id', async (req, res) => {
     );
     res.send(pdfBuffer);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error generando el PDF del alumno' });
+    next(err);
   }
 });
 
 // GET /api/documents/group/:grupo -> ZIP con todos los PDFs del grupo (filtro opcional ?nivel=)
-router.get('/group/:grupo', async (req, res) => {
+router.get('/group/:grupo', async (req, res, next) => {
   const { grupo } = req.params;
   const { nivel } = req.query;
 
@@ -43,24 +42,32 @@ router.get('/group/:grupo', async (req, res) => {
     return res.status(404).json({ error: 'No hay alumnos para ese grupo/nivel' });
   }
 
-  res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', `attachment; filename="grupo_${grupo}${nivel ? '_' + nivel : ''}.zip"`);
+  try {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="grupo_${grupo}${nivel ? '_' + nivel : ''}.zip"`
+    );
 
-  const archive = archiver('zip', { zlib: { level: 9 } });
-  archive.on('error', (err) => {
-    console.error(err);
-    res.status(500).end();
-  });
-  archive.pipe(res);
-
-  for (const student of students) {
-    const pdfBuffer = await generateStudentPDF(student);
-    archive.append(pdfBuffer, {
-      name: `${safeFileName(student.nombre)}_${student.grupo}${student.nivel}.pdf`,
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', (err) => {
+      if (!res.headersSent) res.status(500).json({ error: 'Error construyendo el ZIP' });
+      else res.destroy(err);
     });
-  }
+    archive.pipe(res);
 
-  archive.finalize();
+    for (const student of students) {
+      const pdfBuffer = await generateStudentPDF(student);
+      archive.append(pdfBuffer, {
+        name: `${safeFileName(student.nombre)}_${student.grupo}${student.nivel}.pdf`,
+      });
+    }
+
+    await archive.finalize();
+  } catch (err) {
+    if (!res.headersSent) return next(err);
+    res.destroy(err);
+  }
 });
 
 module.exports = router;

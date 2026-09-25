@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { UploadCloud, FileSpreadsheet, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
-import { uploadStudentsFile } from '../api/client';
+import { uploadStudentsFile, getCatalog, errMsg } from '../api/client';
 
 export default function UploadPage() {
   const inputRef = useRef(null);
@@ -8,6 +8,13 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [grupos, setGrupos] = useState([]);
+
+  useEffect(() => {
+    getCatalog()
+      .then((cat) => setGrupos(cat.grupos.map((g) => g.codigo)))
+      .catch(() => setGrupos([]));
+  }, []);
 
   const handleSelect = (e) => {
     setFile(e.target.files[0] || null);
@@ -23,7 +30,7 @@ export default function UploadPage() {
       const data = await uploadStudentsFile(file);
       setResult(data);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Ocurrió un error al procesar el archivo.');
+      setError(errMsg(err, 'Ocurrió un error al procesar el archivo.'));
     } finally {
       setLoading(false);
     }
@@ -46,6 +53,11 @@ export default function UploadPage() {
           <code className="bg-gray-100 px-1 rounded">areasMejora</code>. Cada alumno se clasificará
           automáticamente con el proyecto de su Grupo y Nivel.
         </p>
+        {grupos.length > 0 && (
+          <p className="text-xs text-gray-400 mt-2">
+            Grupos válidos: <span className="font-medium text-gray-600">{grupos.join(', ')}</span>
+          </p>
+        )}
       </header>
 
       <div

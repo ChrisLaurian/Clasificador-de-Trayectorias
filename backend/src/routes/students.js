@@ -2,7 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../data/db');
-const { classifyStudent } = require('../services/classifier');
+const { classifyStudent, syncStudentCompetencias } = require('../services/classifier');
+
+function validateGrupoNivel(grupo, nivel) {
+  if (!grupo || !db.getGrupos().some((g) => g.codigo === grupo)) {
+    return `Grupo inválido o inexistente: "${grupo || ''}"`;
+  }
+  if (!db.LEVELS.includes(nivel)) {
+    return `Nivel inválido: "${nivel || ''}" (usa B, I o A)`;
+  }
+  return null;
+}
 
 // GET /api/students?grupo=A&nivel=B -> lista con filtros opcionales
 router.get('/', (req, res) => {
@@ -22,19 +32,25 @@ router.get('/:id', (req, res) => {
 
 // POST /api/students -> alta individual (opcional, además de carga masiva)
 router.post('/', (req, res) => {
+  const body = req.body || {};
+  if (!String(body.nombre || '').trim()) {
+    return res.status(400).json({ error: 'El nombre del alumno es obligatorio' });
+  }
+  const error = validateGrupoNivel(body.grupo, body.nivel);
+  if (error) return res.status(400).json({ error });
+
   const students = db.getStudents();
-  const projects = db.getProjects();
   const nuevo = {
     id: uuidv4(),
-    nombre: req.body.nombre || '',
-    grupo: req.body.grupo,
-    nivel: req.body.nivel,
-    diagnostico: req.body.diagnostico || '',
-    intereses: req.body.intereses || '',
-    fortalezas: req.body.fortalezas || '',
-    areasMejora: req.body.areasMejora || '',
+    nombre: String(body.nombre).trim(),
+    grupo: body.grupo,
+    nivel: body.nivel,
+    diagnostico: body.diagnostico || '',
+    intereses: body.intereses || '',
+    fortalezas: body.fortalezas || '',
+    areasMejora: body.areasMejora || '',
   };
-  const clasificado = classifyStudent(nuevo, projects);
+  const clasificado = classifyStudent(nuevo, db.getProjects());
   students.push(clasificado);
   db.saveStudents(students);
   res.status(201).json(clasificado);
@@ -46,11 +62,39 @@ router.put('/:id', (req, res) => {
   const idx = students.findIndex((s) => s.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-  students[idx] = {
-    ...students[idx],
-    ...req.body,
-    id: students[idx].id, // el id nunca cambia
-  };
+  const body = { ...(req.body || {}) };
+  delete body.id;
+
+  const original = students[idx];
+  const cambioUbicacion =
+    (body.grupo !== undefined && body.grupo !== original.grupo) ||
+    (body.nivel !== undefined && body.nivel !== original.nivel);
+
+  if (body.grupo !== undefined || body.nivel !== undefined) {
+    const error = validateGrupoNivel(
+      body.grupo !== undefined ? body.grupo : original.grupo,
+      body.nivel !== undefined ? body.nivel : original.nivel
+    );
+    if (error) return res.status(400).json({ error });
+  }
+
+  if (cambioUbicacion) {
+    // Cambiar de grupo/nivel implica un proyecto nuevo: se reclasifica primero
+    // y se descarta el snapshot anterior para no mezclar proyectos.
+    const base = { ...original, ...body, id: original.id };
+    delete base.proyectoAsignado;
+    students[idx] = classifyStudent(base, db.getProjects());
+  } else {
+    students[idx] = { ...original, ...body, id: original.id };
+  }
+
+  // Garantiza que el snapshot tenga exactamente las competencias del catálogo.
+  students[idx] = syncStudentCompetencias(
+    students[idx],
+    db.getCompetencias(),
+    db.getProjects()
+  );
+
   db.saveStudents(students);
   res.json(students[idx]);
 });
@@ -61,8 +105,7 @@ router.post('/:id/reclasificar', (req, res) => {
   const idx = students.findIndex((s) => s.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-  const projects = db.getProjects();
-  students[idx] = classifyStudent(students[idx], projects);
+  students[idx] = classifyStudent(students[idx], db.getProjects());
   db.saveStudents(students);
   res.json(students[idx]);
 });

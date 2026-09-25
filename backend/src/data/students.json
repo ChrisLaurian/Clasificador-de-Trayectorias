@@ -15,7 +15,44 @@
       "trimestre1": "Prueba de basico",
       "trimestre2": "Prueba de basico 2",
       "trimestre3": "Prueba de basico 3",
-      "metaGeneral": "Prueba de basico 4"
+      "metaGeneral": "Prueba de basico 4",
+      "competencias": {
+        "abstraccion": {
+          "perfil": "Resumen de Arturo Gomez (Básico)",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
     },
     "clasificado": true
   },
@@ -35,7 +72,44 @@
       "trimestre1": "1",
       "trimestre2": "2",
       "trimestre3": "3",
-      "metaGeneral": "4"
+      "metaGeneral": "4",
+      "competencias": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
     },
     "clasificado": true
   },
@@ -55,7 +129,44 @@
       "trimestre1": "A1",
       "trimestre2": "a2",
       "trimestre3": "a3",
-      "metaGeneral": "a4"
+      "metaGeneral": "a4",
+      "competencias": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
     },
     "clasificado": true
   }

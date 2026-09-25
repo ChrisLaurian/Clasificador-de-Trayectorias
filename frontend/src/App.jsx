@@ -48,6 +48,17 @@ export default function App() {
           <Route path="/catalogo" element={<CatalogPage />} />
           <Route path="/carga" element={<UploadPage />} />
           <Route path="/alumnos" element={<StudentsPage />} />
+          <Route
+            path="*"
+            element={
+              <div className="p-10 text-center text-sm text-gray-500">
+                Página no encontrada.{' '}
+                <a href="/catalogo" className="text-brand-600 hover:underline">
+                  Volver al catálogo
+                </a>
+              </div>
+            }
+          />
         </Routes>
       </main>
     </div>

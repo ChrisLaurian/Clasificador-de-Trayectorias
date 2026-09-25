@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Build del frontend
+frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Archivos temporales de escritura (db.js usa tmp + rename)
+backend/src/data/*.tmp
+
+# Editor / sistema
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

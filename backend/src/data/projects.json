@@ -1,200 +1,927 @@
-[
-  {
-    "id": "A-B",
-    "grupo": "A",
-    "nivel": "B",
-    "materia": "CODE",
-    "dominioDisciplinar": "",
-    "trimestre1": "Prueba de basico",
-    "trimestre2": "Prueba de basico 2",
-    "trimestre3": "Prueba de basico 3",
-    "metaGeneral": "Prueba de basico 4"
-  },
-  {
-    "id": "A-I",
-    "grupo": "A",
-    "nivel": "I",
-    "materia": "CODE",
-    "dominioDisciplinar": "",
-    "trimestre1": "1",
-    "trimestre2": "2",
-    "trimestre3": "3",
-    "metaGeneral": "4"
-  },
-  {
-    "id": "A-A",
-    "grupo": "A",
-    "nivel": "A",
-    "materia": "CODE",
-    "dominioDisciplinar": "",
-    "trimestre1": "A1",
-    "trimestre2": "a2",
-    "trimestre3": "a3",
-    "metaGeneral": "a4"
-  },
-  {
-    "id": "B-B",
-    "grupo": "B",
-    "nivel": "B",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "B-I",
-    "grupo": "B",
-    "nivel": "I",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "B-A",
-    "grupo": "B",
-    "nivel": "A",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "C-B",
-    "grupo": "C",
-    "nivel": "B",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "C-I",
-    "grupo": "C",
-    "nivel": "I",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "C-A",
-    "grupo": "C",
-    "nivel": "A",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "D-B",
-    "grupo": "D",
-    "nivel": "B",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "D-I",
-    "grupo": "D",
-    "nivel": "I",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "D-A",
-    "grupo": "D",
-    "nivel": "A",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "E-B",
-    "grupo": "E",
-    "nivel": "B",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "E-I",
-    "grupo": "E",
-    "nivel": "I",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "E-A",
-    "grupo": "E",
-    "nivel": "A",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "F-B",
-    "grupo": "F",
-    "nivel": "B",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "F-I",
-    "grupo": "F",
-    "nivel": "I",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  },
-  {
-    "id": "F-A",
-    "grupo": "F",
-    "nivel": "A",
-    "materia": "",
-    "dominioDisciplinar": "",
-    "trimestre1": "",
-    "trimestre2": "",
-    "trimestre3": "",
-    "metaGeneral": ""
-  }
-]
+{
+  "grupos": [
+    {
+      "codigo": "A",
+      "etiqueta": "",
+      "edad": 6
+    },
+    {
+      "codigo": "B",
+      "etiqueta": "",
+      "edad": 8
+    },
+    {
+      "codigo": "C",
+      "etiqueta": "",
+      "edad": 10
+    },
+    {
+      "codigo": "D",
+      "etiqueta": "",
+      "edad": 12
+    },
+    {
+      "codigo": "E",
+      "etiqueta": "",
+      "edad": 13
+    },
+    {
+      "codigo": "F",
+      "etiqueta": "",
+      "edad": 15
+    }
+  ],
+  "competencias": [
+    {
+      "id": "abstraccion",
+      "nombre": "Abstracción",
+      "core": true
+    },
+    {
+      "id": "pensamiento_logico",
+      "nombre": "Pensamiento lógico-matemático",
+      "core": true
+    },
+    {
+      "id": "pensamiento_computacional",
+      "nombre": "Pensamiento computacional",
+      "core": true
+    },
+    {
+      "id": "implementacion_tecnica",
+      "nombre": "Implementación técnica",
+      "core": true
+    },
+    {
+      "id": "competencias_digitales",
+      "nombre": "Competencias digitales",
+      "core": true
+    }
+  ],
+  "proyectos": [
+    {
+      "id": "A-B",
+      "grupo": "A",
+      "nivel": "B",
+      "materia": "CODE",
+      "dominioDisciplinar": "",
+      "trimestre1": "Prueba de basico",
+      "trimestre2": "Prueba de basico 2",
+      "trimestre3": "Prueba de basico 3",
+      "metaGeneral": "Prueba de basico 4",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "A-I",
+      "grupo": "A",
+      "nivel": "I",
+      "materia": "CODE",
+      "dominioDisciplinar": "",
+      "trimestre1": "1",
+      "trimestre2": "2",
+      "trimestre3": "3",
+      "metaGeneral": "4",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "A-A",
+      "grupo": "A",
+      "nivel": "A",
+      "materia": "CODE",
+      "dominioDisciplinar": "",
+      "trimestre1": "A1",
+      "trimestre2": "a2",
+      "trimestre3": "a3",
+      "metaGeneral": "a4",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "B-B",
+      "grupo": "B",
+      "nivel": "B",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "B-I",
+      "grupo": "B",
+      "nivel": "I",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "B-A",
+      "grupo": "B",
+      "nivel": "A",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "C-B",
+      "grupo": "C",
+      "nivel": "B",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "C-I",
+      "grupo": "C",
+      "nivel": "I",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "C-A",
+      "grupo": "C",
+      "nivel": "A",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "D-B",
+      "grupo": "D",
+      "nivel": "B",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "D-I",
+      "grupo": "D",
+      "nivel": "I",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "D-A",
+      "grupo": "D",
+      "nivel": "A",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "E-B",
+      "grupo": "E",
+      "nivel": "B",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "E-I",
+      "grupo": "E",
+      "nivel": "I",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "E-A",
+      "grupo": "E",
+      "nivel": "A",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "F-B",
+      "grupo": "F",
+      "nivel": "B",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "F-I",
+      "grupo": "F",
+      "nivel": "I",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    },
+    {
+      "id": "F-A",
+      "grupo": "F",
+      "nivel": "A",
+      "materia": "",
+      "dominioDisciplinar": "",
+      "trimestre1": "",
+      "trimestre2": "",
+      "trimestre3": "",
+      "metaGeneral": "",
+      "contenido": {
+        "abstraccion": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_logico": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "pensamiento_computacional": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "implementacion_tecnica": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        },
+        "competencias_digitales": {
+          "perfil": "",
+          "trimestre1": "",
+          "trimestre2": "",
+          "trimestre3": "",
+          "metaGeneral": ""
+        }
+      }
+    }
+  ]
+}

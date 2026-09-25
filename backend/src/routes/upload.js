@@ -6,7 +6,8 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../data/db');
 const { classifyStudent } = require('../services/classifier');
 
-const upload = multer({ storage: multer.memoryStorage() });
+// Límite de 10 MB para evitar agotar la memoria del servidor.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 
 // Normaliza encabezados esperados en el Excel/CSV:
 // nombre | grupo | nivel | diagnostico | intereses | fortalezas | areasMejora
@@ -32,8 +33,20 @@ function normalizeRow(row) {
   };
 }
 
+function handleUpload(req, res, next) {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'El archivo supera el límite de 10 MB' });
+      }
+      return res.status(400).json({ error: `No se pudo recibir el archivo: ${err.message}` });
+    }
+    next();
+  });
+}
+
 // POST /api/upload -> carga masiva + clasificación automática
-router.post('/', upload.single('file'), (req, res) => {
+router.post('/', handleUpload, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo' });
 
   let rows;
@@ -45,8 +58,13 @@ router.post('/', upload.single('file'), (req, res) => {
     return res.status(400).json({ error: 'No se pudo leer el archivo. Verifica el formato (.xlsx, .xls, .csv).' });
   }
 
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: 'El archivo está vacío o no tiene filas con encabezados.' });
+  }
+
   const projects = db.getProjects();
   const existing = db.getStudents();
+  const gruposValidos = db.getGrupos().map((g) => g.codigo);
   const errores = [];
   const nuevos = [];
 
@@ -57,12 +75,15 @@ router.post('/', upload.single('file'), (req, res) => {
       errores.push({ fila: index + 2, motivo: 'Faltan campos obligatorios (nombre, grupo o nivel)' });
       return;
     }
-    if (!db.GROUPS.includes(normalized.grupo)) {
-      errores.push({ fila: index + 2, motivo: `Grupo inválido: "${normalized.grupo}"` });
+    if (!gruposValidos.includes(normalized.grupo)) {
+      errores.push({
+        fila: index + 2,
+        motivo: `Grupo inválido: "${normalized.grupo}". Grupos disponibles: ${gruposValidos.join(', ')}`,
+      });
       return;
     }
     if (!db.LEVELS.includes(normalized.nivel)) {
-      errores.push({ fila: index + 2, motivo: `Nivel inválido: "${normalized.nivel}"` });
+      errores.push({ fila: index + 2, motivo: `Nivel inválido: "${normalized.nivel}" (usa B, I o A)` });
       return;
     }
 
