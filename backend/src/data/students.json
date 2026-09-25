@@ -1,0 +1,62 @@
+[
+  {
+    "id": "d441806f-b3ab-4e4c-b3e3-6d4de9fe429c",
+    "nombre": "Arturo Gomez",
+    "grupo": "A",
+    "nivel": "B",
+    "diagnostico": "",
+    "intereses": "",
+    "fortalezas": "",
+    "areasMejora": "",
+    "edad": 6,
+    "proyectoAsignado": {
+      "materia": "CODE",
+      "dominioDisciplinar": "",
+      "trimestre1": "Prueba de basico",
+      "trimestre2": "Prueba de basico 2",
+      "trimestre3": "Prueba de basico 3",
+      "metaGeneral": "Prueba de basico 4"
+    },
+    "clasificado": true
+  },
+  {
+    "id": "bf82d3d6-c9a4-416a-903d-0b984ffa02f5",
+    "nombre": "Ximena Lopez",
+    "grupo": "A",
+    "nivel": "I",
+    "diagnostico": "",
+    "intereses": "",
+    "fortalezas": "",
+    "areasMejora": "",
+    "edad": 6,
+    "proyectoAsignado": {
+      "materia": "CODE",
+      "dominioDisciplinar": "",
+      "trimestre1": "1",
+      "trimestre2": "2",
+      "trimestre3": "3",
+      "metaGeneral": "4"
+    },
+    "clasificado": true
+  },
+  {
+    "id": "c7a5880b-a2e6-4e3b-814e-8d43908e20d9",
+    "nombre": "Daniela Tripp",
+    "grupo": "A",
+    "nivel": "A",
+    "diagnostico": "",
+    "intereses": "",
+    "fortalezas": "",
+    "areasMejora": "",
+    "edad": 6,
+    "proyectoAsignado": {
+      "materia": "CODE",
+      "dominioDisciplinar": "",
+      "trimestre1": "A1",
+      "trimestre2": "a2",
+      "trimestre3": "a3",
+      "metaGeneral": "a4"
+    },
+    "clasificado": true
+  }
+]
