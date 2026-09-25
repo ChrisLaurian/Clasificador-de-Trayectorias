@@ -193,8 +193,21 @@ function readJSONFile(filePath) {
 function writeJSONFile(filePath, data) {
   // Escritura atómica (tmp + rename) para no corromper el archivo local.
   const tmp = `${filePath}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
-  fs.renameSync(tmp, filePath);
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tmp, filePath);
+  } catch (err) {
+    // En Vercel el filesystem es de solo lectura: si no hay KV, avisar claro.
+    if (err.code === 'EROFS' || err.code === 'EACCES' || err.code === 'EPERM') {
+      const e = new Error(
+        'El servidor no permite escribir archivos locales: falta el almacén KV. ' +
+          'Crea y conecta el almacén KV en Vercel (Storage → KV) y vuelve a desplegar.'
+      );
+      e.status = 503;
+      throw e;
+    }
+    throw err;
+  }
 }
 
 async function readKV(key) {

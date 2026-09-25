@@ -18,9 +18,15 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
-// Público: estado del servicio
+// Público: estado del servicio (avisa si en Vercel falta el KV)
 app.get('/api/health', (req, res) =>
-  res.json({ status: 'ok', storage: db.isKV() ? 'kv' : 'json' })
+  res.json({
+    status: 'ok',
+    storage: db.isKV() ? 'kv' : 'json',
+    ...(process.env.VERCEL && !db.isKV()
+      ? { warning: 'KV no configurado: la escritura fallará (filesystem de solo lectura)' }
+      : {}),
+  })
 );
 
 // Autenticación (registro abierto, login, logout, sesión actual)
