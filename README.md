@@ -17,11 +17,14 @@ Clasificador-de-Trayectorias/
 │   ├── src/
 │   │   ├── app.js               # App Express sin listen (local + Vercel)
 │   │   ├── data/
-│   │   │   ├── db.js            # Único punto de datos: driver KV o JSON local
+│   │   │   ├── db.js            # Único punto de datos: KV o JSON, por usuario
 │   │   │   ├── kvClient.js      # Cliente REST de Vercel KV (Upstash)
-│   │   │   ├── students.json    # Semilla/datos locales de alumnos
-│   │   │   └── projects.json    # Catálogo: grupos + competencias + proyectos
+│   │   │   ├── students.json    # Semilla: alumnos (1.er usuario registrado)
+│   │   │   └── projects.json    # Semilla: catálogo (todos los usuarios nuevos)
+│   │   ├── middleware/
+│   │   │   └── auth.js          # Cookie de sesión + requireAuth
 │   │   ├── routes/
+│   │   │   ├── auth.js          # Registro abierto, login, logout, /me
 │   │   │   ├── projects.js      # Catálogo completo (grupos, competencias, celdas)
 │   │   │   ├── students.js      # CRUD de alumnos + reclasificación
 │   │   │   ├── upload.js        # Carga masiva Excel/CSV + clasificación automática
@@ -29,21 +32,24 @@ Clasificador-de-Trayectorias/
 │   │   │   └── export.js        # Exportación masiva CSV / Excel / XML / JSON
 │   │   └── services/
 │   │       ├── classifier.js    # Algoritmo alumno -> proyecto (snapshot por competencia)
+│   │       ├── passwords.js     # Hash de contraseñas (scrypt)
 │   │       ├── pdfGenerator.js  # PDF con tabla de competencias (pdfkit)
 │   │       └── exporters.js     # Generadores CSV / XML / JSON / XLSX
 │   └── package.json
 │
 └── frontend/                    # React + Vite + Tailwind
     ├── src/
-    │   ├── api/client.js        # Cliente HTTP (axios) + descargas + exportación
+    │   ├── api/client.js        # Cliente HTTP (axios) + auth + descargas
     │   ├── constants.js         # Niveles, etiquetas, colores
     │   ├── components/
+    │   │   ├── Modal.jsx            # Modal genérico (Escape / clic fuera)
     │   │   └── StudentEditPanel.jsx
     │   ├── pages/
+    │   │   ├── LoginPage.jsx        # Acceso: iniciar sesión / crear cuenta
     │   │   ├── CatalogPage.jsx      # Módulo 1: grupos, competencias y catálogo
     │   │   ├── UploadPage.jsx       # Módulo 2: carga masiva y clasificación
     │   │   └── StudentsPage.jsx     # Módulo 3 y 4: personalización + documentos
-    │   ├── App.jsx
+    │   ├── App.jsx               # Guardia de sesión + navegación
     │   └── main.jsx
     └── package.json
 ```
@@ -67,6 +73,22 @@ npm run dev         # http://localhost:5173
 ```
 
 El `vite.config.js` incluye un proxy de `/api` hacia `http://localhost:4000`.
+
+La primera pantalla es el acceso: **crea una cuenta** (registro abierto). El
+primer usuario en registrarse hereda los alumnos de `students.json`; todos los
+usuarios arrancan con una copia del catálogo de `projects.json`.
+
+## Usuarios y sesiones
+
+- **Registro abierto**: cualquiera puede crear cuenta con usuario (3–32
+  caracteres: letras, números, `.`, `_`, `-`) y contraseña (mínimo 6).
+- **Cada usuario tiene sus propios datos**: su lista de alumnos y su propia
+  configuración (grupos, competencias y matriz de proyectos). No hay roles ni
+  datos compartidos entre cuentas.
+- **Sesión**: cookie `httpOnly` (`sid`, 30 días) guardada en el mismo almacén
+  (KV en producción, `sessions.json` en local). Logout invalida la sesión.
+- **Protección**: salvo `/api/health` y `/api/auth/*`, toda la API exige sesión
+  y responde `401` sin ella; el frontend redirige a `/login` automáticamente.
 
 ## Despliegue en Vercel (producción)
 
@@ -97,14 +119,17 @@ Notas de la nube (plan Hobby):
 
 ## Flujo de uso
 
+0. **Acceso** — Inicia sesión o crea una cuenta (cada usuario ve solo sus datos).
 1. **Catálogo**
    - **Grupos**: A–F vienen por defecto y se pueden editar (etiqueta, edad) o
-     eliminar; se pueden añadir subgrupos como `A1`, `A2`, `A3` (letras y números).
+     eliminar; el botón **"Añadir grupo"** pide el nombre y listo (el código se
+     genera solo, p. ej. `1° Primaria` → `1PRIMARIA`).
    - **Competencias**: vienen 5 obligatorias (Abstracción, Pensamiento
      lógico-matemático, Pensamiento computacional, Implementación técnica y
      Competencias digitales) que no se pueden eliminar, más las que quieras añadir.
-   - **Matriz Grupo × Nivel**: cada celda define materia, dominio disciplinar,
-     meta general y, por competencia: descripción base del alumno, Trimestre 1–3 y Meta.
+   - **Matriz Grupo × Nivel**: al hacer click en una celda (Básico, Intermedio o
+     Avanzado) se abre un **modal** con materia, dominio disciplinar, meta
+     general y, por competencia: descripción base del alumno, Trimestre 1–3 y Meta.
      En la descripción base se pueden usar `{{nombre}}`, `{{grupo}}`, `{{nivel}}`
      y `{{edad}}`, que se reemplazan por cada alumno.
 2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel,
@@ -121,8 +146,9 @@ Notas de la nube (plan Hobby):
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET / PUT | `/api/projects` | Catálogo completo `{grupos, competencias, proyectos}` |
-| GET / POST / PUT / DELETE | `/api/students...` | CRUD de alumnos y `/:id/reclasificar` |
+| POST / GET | `/api/auth/register`, `/login`, `/logout`, `/me` | Registro abierto y sesión |
+| GET / PUT | `/api/projects` | Catálogo completo `{grupos, competencias, proyectos}` (del usuario) |
+| GET / POST / PUT / DELETE | `/api/students...` | CRUD de alumnos y `/:id/reclasificar` (del usuario) |
 | POST | `/api/upload` | Carga masiva Excel/CSV |
 | GET | `/api/documents/student/:id` | PDF individual |
 | GET | `/api/documents/group/:grupo?nivel=` | ZIP por grupo |
@@ -133,8 +159,10 @@ Notas de la nube (plan Hobby):
 - **Persistencia**: `src/data/db.js` es el único punto de acceso a los datos y
   expone una interfaz **asíncrona** con dos drivers intercambiables:
   **Vercel KV (Upstash)** cuando existen las variables `KV_REST_API_*`
-  (producción), o **JSON local con escritura atómica** (desarrollo). La
-  migración a SQLite/PostgreSQL seguiría reescribiendo solo ese archivo.
+  (producción), o **JSON local con escritura atómica** (desarrollo). Guarda
+  usuarios, sesiones y los datos **de cada usuario** (catálogo y alumnos por
+  separado). La migración a SQLite/PostgreSQL seguiría reescribiendo solo ese
+  archivo.
 - **Snapshot por alumno**: `classifier.js` guarda una copia del proyecto
   (`proyectoAsignado`) al clasificar, incluidas las competencias. Esto permite
   editar un alumno sin que cambie retroactivamente si luego se edita el catálogo.
@@ -148,6 +176,6 @@ Notas de la nube (plan Hobby):
   hay límite de tamaño en subidas (4 MB, límite de Vercel) y el frontend muestra
   banners de error en cada operación (los indicadores de carga nunca quedan
   trabados).
-- **Siguientes pasos sugeridos**: autenticación de usuarios/roles, historial de
-  versiones por alumno, plantilla DOCX editable y migración de `db.js` a
-  PostgreSQL con Prisma/Knex cuando el volumen lo requiera.
+- **Siguientes pasos sugeridos**: historial de versiones por alumno, plantilla
+  DOCX editable, roles (admin/profesor) y migración de `db.js` a PostgreSQL con
+  Prisma/Knex cuando el volumen lo requiera.

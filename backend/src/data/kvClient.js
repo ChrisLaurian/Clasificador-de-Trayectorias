@@ -39,8 +39,9 @@ async function kvGet(key) {
   return JSON.parse(raw);
 }
 
-async function kvSet(key, value) {
-  await command('SET', key, JSON.stringify(value));
+async function kvSet(key, value, ttlSeconds) {
+  if (ttlSeconds) await command('SET', key, JSON.stringify(value), 'EX', ttlSeconds);
+  else await command('SET', key, JSON.stringify(value));
 }
 
 async function kvDel(key) {

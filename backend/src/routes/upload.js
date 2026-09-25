@@ -68,8 +68,8 @@ router.post(
       return res.status(400).json({ error: 'El archivo está vacío o no tiene filas con encabezados.' });
     }
 
-    const catalog = await db.getCatalog();
-    const existing = await db.getStudents();
+    const catalog = await db.getCatalog(req.user.id);
+    const existing = await db.getStudents(req.user.id);
     const gruposValidos = catalog.grupos.map((g) => g.codigo);
     const errores = [];
     const nuevos = [];
@@ -98,7 +98,7 @@ router.post(
     });
 
     const students = [...existing, ...nuevos];
-    await db.saveStudents(students);
+    await db.saveStudents(req.user.id, students);
 
     res.json({
       insertados: nuevos.length,

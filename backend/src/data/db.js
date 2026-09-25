@@ -1,23 +1,37 @@
 // db.js
-// Único punto de acceso a los datos.
+// Único punto de acceso a los datos: usuarios, sesiones y los datos de
+// CADA usuario (catálogo propio + lista propia de alumnos).
 //
 // Dos drivers con la MISMA interfaz asíncrona:
 //   - KV (Vercel KV / Upstash): en producción (Vercel) — JSON completo por clave.
 //   - Archivos JSON locales: en desarrollo (`npm run dev` en backend/).
+//     DATA_DIR permite redirigir los archivos (usado por los tests).
 //
-// Migrar a SQLite/PostgreSQL sigue implicando reescribir solo este archivo.
+// Semillas (solo lectura): students.json y projects.json. El primer usuario
+// registrado hereda los alumnos de students.json; todos los usuarios nuevos
+// arrancan con una copia del catálogo de projects.json.
 
 const fs = require('fs');
 const path = require('path');
 const { LEVELS, LEVEL_LABEL } = require('../constants');
-const { kvAvailable, kvGet, kvSet } = require('./kvClient');
+const { kvAvailable, kvGet, kvSet, kvDel } = require('./kvClient');
+const { syncStudentCompetencias } = require('../services/classifier');
 
-const DATA_DIR = __dirname;
-const STUDENTS_FILE = path.join(DATA_DIR, 'students.json');
-const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const SEED_STUDENTS_FILE = path.join(DATA_DIR, 'students.json');
+const SEED_PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 
-const CATALOG_KEY = 'clasificador:catalog:v1';
-const STUDENTS_KEY = 'clasificador:students:v1';
+const USERS_KEY = 'clasificador:users:v1';
+const sessionKey = (t) => `clasificador:session:${t}`;
+const catalogKey = (uid) => `clasificador:catalog:${uid}`;
+const studentsKey = (uid) => `clasificador:students:${uid}`;
+
+const userCatalogFile = (uid) => path.join(DATA_DIR, `catalog.${uid}.json`);
+const userStudentsFile = (uid) => path.join(DATA_DIR, `students.${uid}.json`);
+
+const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 días
 
 // Grupos por defecto (se pueden añadir/editar/eliminar desde el frontend:
 // p. ej. subgrupos A1, A2, A3 dentro del grupo principal A).
@@ -161,7 +175,7 @@ function buildDefaultCatalog() {
   return { grupos: clone(DEFAULT_GRUPOS), competencias: clone(CORE_COMPETENCIAS), proyectos: [] };
 }
 
-// --- Almacenamiento (KV o archivos locales) ------------------------------------
+// --- Almacenamiento genérico (KV o archivos locales) -----------------------------
 
 const useKV = () => kvAvailable();
 
@@ -183,84 +197,134 @@ function writeJSONFile(filePath, data) {
   fs.renameSync(tmp, filePath);
 }
 
-async function readRawCatalog() {
-  if (useKV()) return kvGet(CATALOG_KEY);
-  return readJSONFile(PROJECTS_FILE);
+async function readKV(key) {
+  return kvGet(key);
+}
+async function writeKV(key, value, ttl) {
+  return kvSet(key, value, ttl);
 }
 
-async function writeRawCatalog(data) {
-  if (useKV()) return kvSet(CATALOG_KEY, data);
-  writeJSONFile(PROJECTS_FILE, data);
+// --- Usuarios ---------------------------------------------------------------------
+
+async function getUsersList() {
+  if (useKV()) return (await readKV(USERS_KEY)) || [];
+  return readJSONFile(USERS_FILE) || [];
 }
 
-async function readRawStudents() {
-  if (useKV()) return kvGet(STUDENTS_KEY);
-  return readJSONFile(STUDENTS_FILE);
+async function saveUsersList(list) {
+  if (useKV()) return writeKV(USERS_KEY, list);
+  writeJSONFile(USERS_FILE, list);
 }
 
-async function writeRawStudents(data) {
-  if (useKV()) return kvSet(STUDENTS_KEY, data);
-  writeJSONFile(STUDENTS_FILE, data);
+async function findUser(username) {
+  const lower = String(username || '').trim().toLowerCase();
+  const list = await getUsersList();
+  return list.find((u) => u.usernameLower === lower) || null;
 }
 
-// Semilla: en KV arrancamos con los archivos JSON empaquetados (tus datos actuales).
-async function seedStudents() {
-  return readJSONFile(STUDENTS_FILE) || [];
+async function getUser(id) {
+  const list = await getUsersList();
+  return list.find((u) => u.id === id) || null;
 }
 
-async function loadCatalog() {
-  let raw = await readRawCatalog();
-  let sembrado = false;
-  // Semilla: si el almacén está vacío (KV recién creado) usamos los JSON empaquetados.
-  if (raw === null || raw === undefined) {
-    raw = readJSONFile(PROJECTS_FILE);
-    sembrado = true;
+async function createUser(user) {
+  const list = await getUsersList();
+  const lower = String(user.username || '').trim().toLowerCase();
+  if (list.some((u) => u.usernameLower === lower)) {
+    const err = new Error('Ese nombre de usuario ya está en uso');
+    err.status = 409;
+    throw err;
   }
-  if (raw === null || raw === undefined) {
-    raw = buildDefaultCatalog();
-    sembrado = true;
+  const nuevo = { ...user, usernameLower: lower, esPrimero: list.length === 0 };
+  list.push(nuevo);
+  await saveUsersList(list);
+  await seedUserData(nuevo);
+  return nuevo;
+}
+
+// Copia las semillas empaquetadas a los archivos/claves del usuario nuevo.
+async function seedUserData(user) {
+  const bruto = readJSONFile(SEED_PROJECTS_FILE);
+  const { catalog } = normalizeCatalog(bruto || buildDefaultCatalog());
+  await writeUserCatalog(user.id, catalog);
+
+  const alumnos = user.esPrimero ? readJSONFile(SEED_STUDENTS_FILE) || [] : [];
+  const sincronizados = alumnos.map((s) =>
+    syncStudentCompetencias(s, catalog.competencias, catalog.proyectos)
+  );
+  await writeUserStudents(user.id, sincronizados);
+}
+
+// --- Sesiones ---------------------------------------------------------------------
+
+async function setSession(token, userId) {
+  const exp = Date.now() + SESSION_TTL_SECONDS * 1000;
+  if (useKV()) return writeKV(sessionKey(token), { userId, exp }, SESSION_TTL_SECONDS);
+  const all = readJSONFile(SESSIONS_FILE) || {};
+  const ahora = Date.now();
+  Object.keys(all).forEach((t) => {
+    if (all[t] && all[t].exp && all[t].exp < ahora) delete all[t];
+  });
+  all[token] = { userId, exp };
+  writeJSONFile(SESSIONS_FILE, all);
+}
+
+async function getSession(token) {
+  if (!token) return null;
+  let rec;
+  if (useKV()) rec = await readKV(sessionKey(token));
+  else rec = (readJSONFile(SESSIONS_FILE) || {})[token] || null;
+  if (!rec) return null;
+  if (rec.exp && rec.exp < Date.now()) {
+    await delSession(token);
+    return null;
   }
+  return rec;
+}
+
+async function delSession(token) {
+  if (!token) return;
+  if (useKV()) return kvDel(sessionKey(token));
+  const all = readJSONFile(SESSIONS_FILE) || {};
+  delete all[token];
+  writeJSONFile(SESSIONS_FILE, all);
+}
+
+// --- Datos por usuario --------------------------------------------------------------
+
+async function readUserCatalog(uid) {
+  if (useKV()) return readKV(catalogKey(uid));
+  return readJSONFile(userCatalogFile(uid));
+}
+
+async function writeUserCatalog(uid, data) {
+  if (useKV()) return writeKV(catalogKey(uid), data);
+  writeJSONFile(userCatalogFile(uid), data);
+}
+
+async function readUserStudents(uid) {
+  if (useKV()) return readKV(studentsKey(uid));
+  return readJSONFile(userStudentsFile(uid));
+}
+
+async function writeUserStudents(uid, data) {
+  if (useKV()) return writeKV(studentsKey(uid), data);
+  writeJSONFile(userStudentsFile(uid), data);
+}
+
+async function loadCatalog(uid) {
+  let raw = await readUserCatalog(uid);
+  if (raw === null || raw === undefined) raw = readJSONFile(SEED_PROJECTS_FILE);
+  if (raw === null || raw === undefined) raw = buildDefaultCatalog();
 
   const { catalog, dirty } = normalizeCatalog(raw);
-  if (dirty || sembrado) await writeRawCatalog(catalog);
+  if (dirty) await writeUserCatalog(uid, catalog);
   return catalog;
 }
 
-async function loadStudents() {
-  let raw = await readRawStudents();
-  if (raw === null || raw === undefined) {
-    raw = await seedStudents();
-    if (useKV()) await writeRawStudents(raw); // persiste la semilla en KV
-    return raw;
-  }
+async function loadStudents(uid) {
+  const raw = await readUserStudents(uid);
   return Array.isArray(raw) ? raw : [];
-}
-
-// Inicialización única por proceso: siembra KV si hace falta y sincroniza los
-// snapshots de alumnos creados antes de existir las competencias.
-let initPromise = null;
-function initOnce() {
-  if (!initPromise) {
-    initPromise = (async () => {
-      const catalog = await loadCatalog();
-      const students = await loadStudents();
-
-      const incompletos = students.some(
-        (s) => !s.proyectoAsignado || !s.proyectoAsignado.competencias
-      );
-      if (incompletos) {
-        const { syncStudentCompetencias } = require('../services/classifier');
-        const sincronizados = students.map((s) =>
-          syncStudentCompetencias(s, catalog.competencias, catalog.proyectos)
-        );
-        await writeRawStudents(sincronizados);
-      }
-    })().catch((err) => {
-      initPromise = null; // reintenta en la siguiente petición
-      throw err;
-    });
-  }
-  return initPromise;
 }
 
 module.exports = {
@@ -269,22 +333,29 @@ module.exports = {
   DEFAULT_GRUPOS,
   CORE_COMPETENCIAS,
   emptyContenido,
+  SESSION_TTL_SECONDS,
   isKV: useKV,
-  initOnce,
 
-  getCatalog: () => loadCatalog(),
+  // usuarios y sesiones
+  findUser,
+  getUser,
+  createUser,
+  setSession,
+  getSession,
+  delSession,
 
-  saveCatalog: async ({ grupos, competencias, proyectos }) => {
-    const actual = await loadCatalog();
+  // datos por usuario
+  getCatalog: loadCatalog,
+  saveCatalog: async (uid, { grupos, competencias, proyectos }) => {
+    const actual = await loadCatalog(uid);
     const next = normalizeCatalog({
       grupos: grupos || actual.grupos,
       competencias: competencias || actual.competencias,
       proyectos: proyectos || actual.proyectos,
     }).catalog;
-    await writeRawCatalog(next);
+    await writeUserCatalog(uid, next);
     return next;
   },
-
-  getStudents: () => loadStudents(),
-  saveStudents: async (data) => writeRawStudents(Array.isArray(data) ? data : []),
+  getStudents: loadStudents,
+  saveStudents: async (uid, data) => writeUserStudents(uid, Array.isArray(data) ? data : []),
 };

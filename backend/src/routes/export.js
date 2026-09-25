@@ -31,7 +31,7 @@ router.get(
     }
 
     const { grupo, nivel, nombre } = req.query;
-    let students = await db.getStudents();
+    let students = await db.getStudents(req.user.id);
     if (grupo) students = students.filter((s) => s.grupo === grupo);
     if (nivel) students = students.filter((s) => s.nivel === nivel);
     if (nombre) {
@@ -43,7 +43,7 @@ router.get(
       return res.status(404).json({ error: 'No hay alumnos para esos filtros' });
     }
 
-    const { competencias } = await db.getCatalog();
+    const { competencias } = await db.getCatalog(req.user.id);
     const stamp = new Date().toISOString().slice(0, 10);
     const parts = ['alumnos', grupo || 'todos', nivel || '', stamp].filter(Boolean);
     const filename = `${parts.join('_')}.${FORMATS[format].ext}`;

@@ -21,11 +21,11 @@ function pdfOptions(catalog) {
 router.get(
   '/student/:id',
   asyncHandler(async (req, res, next) => {
-    const students = await db.getStudents();
+    const students = await db.getStudents(req.user.id);
     const student = students.find((s) => s.id === req.params.id);
     if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-    const catalog = await db.getCatalog();
+    const catalog = await db.getCatalog(req.user.id);
     const pdfBuffer = await generateStudentPDF(student, pdfOptions(catalog));
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -44,7 +44,7 @@ router.get(
     const { grupo } = req.params;
     const { nivel } = req.query;
 
-    const students = (await db.getStudents()).filter((s) => s.grupo === grupo);
+    const students = (await db.getStudents(req.user.id)).filter((s) => s.grupo === grupo);
     const filtrados = nivel ? students.filter((s) => s.nivel === nivel) : students;
 
     if (filtrados.length === 0) {
@@ -52,7 +52,7 @@ router.get(
     }
 
     try {
-      const catalog = await db.getCatalog();
+      const catalog = await db.getCatalog(req.user.id);
       const options = pdfOptions(catalog);
 
       res.setHeader('Content-Type', 'application/zip');

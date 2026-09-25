@@ -4,29 +4,30 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 
+const authRouter = require('./routes/auth');
 const projectsRouter = require('./routes/projects');
 const studentsRouter = require('./routes/students');
 const uploadRouter = require('./routes/upload');
 const documentsRouter = require('./routes/documents');
 const exportRouter = require('./routes/export');
 const db = require('./data/db');
+const { requireAuth } = require('./middleware/auth');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
-// Inicialización única por proceso: siembra el almacén si está vacío y
-// sincroniza snapshots antiguos. Nunca debe tumbar la petición.
-app.use((req, res, next) => {
-  db.initOnce()
-    .then(() => next())
-    .catch(next);
-});
-
+// Público: estado del servicio
 app.get('/api/health', (req, res) =>
   res.json({ status: 'ok', storage: db.isKV() ? 'kv' : 'json' })
 );
+
+// Autenticación (registro abierto, login, logout, sesión actual)
+app.use('/api/auth', authRouter);
+
+// Todo lo demás exige sesión: cada usuario ve sus propios datos
+app.use('/api', requireAuth);
 
 app.use('/api/projects', projectsRouter);
 app.use('/api/students', studentsRouter);
@@ -42,14 +43,14 @@ app.use('/api', (req, res) => {
 // Manejo de errores centralizado
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error(err);
+  const status = Number(err.status) || Number(err.statusCode) || 500;
+  if (status >= 500) console.error(err); // los 4xx (auth, validaciones) son esperados
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ error: `Error subiendo el archivo: ${err.message}` });
   }
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'JSON inválido en el cuerpo de la petición' });
   }
-  const status = Number(err.status) || Number(err.statusCode) || 500;
   res.status(status).json({ error: err.message || 'Error interno del servidor' });
 });
 

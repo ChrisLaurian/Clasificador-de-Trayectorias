@@ -20,7 +20,7 @@ router.get(
   '/',
   asyncHandler(async (req, res) => {
     const { grupo, nivel } = req.query;
-    let students = await db.getStudents();
+    let students = await db.getStudents(req.user.id);
     if (grupo) students = students.filter((s) => s.grupo === grupo);
     if (nivel) students = students.filter((s) => s.nivel === nivel);
     res.json(students);
@@ -31,7 +31,7 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    const student = (await db.getStudents()).find((s) => s.id === req.params.id);
+    const student = (await db.getStudents(req.user.id)).find((s) => s.id === req.params.id);
     if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
     res.json(student);
   })
@@ -45,11 +45,11 @@ router.post(
     if (!String(body.nombre || '').trim()) {
       return res.status(400).json({ error: 'El nombre del alumno es obligatorio' });
     }
-    const catalog = await db.getCatalog();
+    const catalog = await db.getCatalog(req.user.id);
     const error = validateGrupoNivel(body.grupo, body.nivel, catalog.grupos);
     if (error) return res.status(400).json({ error });
 
-    const students = await db.getStudents();
+    const students = await db.getStudents(req.user.id);
     const nuevo = {
       id: uuidv4(),
       nombre: String(body.nombre).trim(),
@@ -62,7 +62,7 @@ router.post(
     };
     const clasificado = classifyStudent(nuevo, catalog);
     students.push(clasificado);
-    await db.saveStudents(students);
+    await db.saveStudents(req.user.id, students);
     res.status(201).json(clasificado);
   })
 );
@@ -71,7 +71,7 @@ router.post(
 router.put(
   '/:id',
   asyncHandler(async (req, res) => {
-    const students = await db.getStudents();
+    const students = await db.getStudents(req.user.id);
     const idx = students.findIndex((s) => s.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'Alumno no encontrado' });
 
@@ -83,7 +83,7 @@ router.put(
       (body.grupo !== undefined && body.grupo !== original.grupo) ||
       (body.nivel !== undefined && body.nivel !== original.nivel);
 
-    const catalog = await db.getCatalog();
+    const catalog = await db.getCatalog(req.user.id);
     if (body.grupo !== undefined || body.nivel !== undefined) {
       const error = validateGrupoNivel(
         body.grupo !== undefined ? body.grupo : original.grupo,
@@ -106,7 +106,7 @@ router.put(
     // Garantiza que el snapshot tenga exactamente las competencias del catálogo.
     students[idx] = syncStudentCompetencias(students[idx], catalog.competencias, catalog.proyectos);
 
-    await db.saveStudents(students);
+    await db.saveStudents(req.user.id, students);
     res.json(students[idx]);
   })
 );
@@ -115,13 +115,13 @@ router.put(
 router.post(
   '/:id/reclasificar',
   asyncHandler(async (req, res) => {
-    const students = await db.getStudents();
+    const students = await db.getStudents(req.user.id);
     const idx = students.findIndex((s) => s.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-    const catalog = await db.getCatalog();
+    const catalog = await db.getCatalog(req.user.id);
     students[idx] = classifyStudent(students[idx], catalog);
-    await db.saveStudents(students);
+    await db.saveStudents(req.user.id, students);
     res.json(students[idx]);
   })
 );
@@ -130,8 +130,8 @@ router.post(
 router.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    const students = (await db.getStudents()).filter((s) => s.id !== req.params.id);
-    await db.saveStudents(students);
+    const students = (await db.getStudents(req.user.id)).filter((s) => s.id !== req.params.id);
+    await db.saveStudents(req.user.id, students);
     res.status(204).end();
   })
 );
@@ -140,7 +140,7 @@ router.delete(
 router.delete(
   '/',
   asyncHandler(async (req, res) => {
-    await db.saveStudents([]);
+    await db.saveStudents(req.user.id, []);
     res.status(204).end();
   })
 );

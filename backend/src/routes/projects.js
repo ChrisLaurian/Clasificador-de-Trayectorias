@@ -10,7 +10,7 @@ const CODE_RE = /^[A-Za-z0-9]{1,12}$/;
 router.get(
   '/',
   asyncHandler(async (req, res) => {
-    res.json(await db.getCatalog());
+    res.json(await db.getCatalog(req.user.id));
   })
 );
 
@@ -78,7 +78,7 @@ router.put(
   asyncHandler(async (req, res) => {
     const body = req.body || {};
     const esArreglo = Array.isArray(body); // compatibilidad con el formato antiguo
-    const actual = await db.getCatalog();
+    const actual = await db.getCatalog(req.user.id);
 
     const nextGrupos = esArreglo ? actual.grupos : body.grupos || actual.grupos;
     const nextCompetencias = esArreglo ? actual.competencias : body.competencias || actual.competencias;
@@ -92,7 +92,7 @@ router.put(
 
     // Bloquea la eliminación de un grupo que todavía tiene alumnos.
     const codigos = new Set(nextGrupos.map((g) => g.codigo));
-    const students = await db.getStudents();
+    const students = await db.getStudents(req.user.id);
     const huerfanos = students.filter((s) => !codigos.has(s.grupo));
     if (huerfanos.length) {
       const gruposPeligro = [...new Set(huerfanos.map((s) => s.grupo))].join(', ');
@@ -101,7 +101,7 @@ router.put(
       });
     }
 
-    const catalog = await db.saveCatalog({
+    const catalog = await db.saveCatalog(req.user.id, {
       grupos: nextGrupos,
       competencias: nextCompetencias,
       proyectos: nextProyectos,
@@ -112,7 +112,7 @@ router.put(
       syncStudentCompetencias(s, catalog.competencias, catalog.proyectos)
     );
     if (JSON.stringify(studentsSync) !== JSON.stringify(students)) {
-      await db.saveStudents(studentsSync);
+      await db.saveStudents(req.user.id, studentsSync);
     }
 
     res.json(catalog);

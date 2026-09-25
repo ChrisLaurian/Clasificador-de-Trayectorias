@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Save, LayoutGrid, Loader2, CheckCircle2, AlertTriangle, Plus, Trash2, Users, Sparkles } from 'lucide-react';
 import { getCatalog, saveCatalog, errMsg } from '../api/client';
 import { LEVELS, LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
+import Modal from '../components/Modal.jsx';
 
 const GRUPO_CODE_RE = /^[A-Za-z0-9]{1,12}$/;
 
@@ -23,6 +24,15 @@ const slug = (text) =>
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 
+// Código de grupo derivado del nombre: sin acentos ni símbolos, en mayúsculas
+// ("1° Primaria" -> "1PRIMARIA", "A1" -> "A1")
+const codeFromNombre = (nombre) =>
+  nombre
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+
 const tieneContenido = (entry) =>
   entry && [entry.perfil, entry.trimestre1, entry.trimestre2, entry.trimestre3, entry.metaGeneral]
     .some((v) => v && String(v).trim());
@@ -34,7 +44,9 @@ export default function CatalogPage() {
   const [flash, setFlash] = useState('');
   const [error, setError] = useState('');
   const [activeCell, setActiveCell] = useState(null); // {grupo, nivel}
-  const [newGrupo, setNewGrupo] = useState({ codigo: '', etiqueta: '', edad: '' });
+  const [modalCell, setModalCell] = useState(false); // modal de edición de celda
+  const [grupoModal, setGrupoModal] = useState(false); // modal "Añadir grupo"
+  const [nombreGrupo, setNombreGrupo] = useState('');
   const [newComp, setNewComp] = useState('');
   const [grupoDraft, setGrupoDraft] = useState({}); // código temporal mientras se escribe
 
@@ -72,28 +84,36 @@ export default function CatalogPage() {
     }));
 
   // --- Grupos ---
-  const addGrupo = () => {
-    const codigo = newGrupo.codigo.trim().toUpperCase();
-    if (!GRUPO_CODE_RE.test(codigo)) {
-      setError('Código de grupo inválido: usa solo letras y números (máx. 12), p. ej. A1, A2, B3');
+  const crearGrupo = (codigo, etiqueta, edad = null) =>
+    setCatalog((c) => ({
+      ...c,
+      grupos: [...c.grupos, { codigo, etiqueta, edad }],
+      proyectos: [...c.proyectos, ...LEVELS.map((n) => emptyCell(codigo, n))],
+    }));
+
+  // Modal "Añadir grupo": solo pide el nombre y listo
+  const confirmarGrupo = () => {
+    const nombre = nombreGrupo.trim();
+    if (!nombre) {
+      setError('Escribe el nombre del grupo');
+      return;
+    }
+    const codigo = codeFromNombre(nombre);
+    if (!codigo || codigo.length > 12) {
+      setError(
+        'Nombre inválido: debe generar un código de hasta 12 letras/números, p. ej. "1° Primaria" o "A1"'
+      );
       return;
     }
     if (catalog.grupos.some((g) => g.codigo === codigo)) {
       setError(`El grupo ${codigo} ya existe`);
       return;
     }
-    const grupo = {
-      codigo,
-      etiqueta: newGrupo.etiqueta.trim(),
-      edad: newGrupo.edad === '' ? null : Number(newGrupo.edad),
-    };
-    setCatalog((c) => ({
-      ...c,
-      grupos: [...c.grupos, grupo],
-      proyectos: [...c.proyectos, ...LEVELS.map((n) => emptyCell(codigo, n))],
-    }));
-    setNewGrupo({ codigo: '', etiqueta: '', edad: '' });
     setError('');
+    // Si el nombre ya es el código (p. ej. "A1"), no hace falta etiqueta
+    crearGrupo(codigo, codigo === nombre.toUpperCase() ? '' : nombre);
+    setNombreGrupo('');
+    setGrupoModal(false);
   };
 
   const updateGrupo = (codigo, patch) =>
@@ -181,8 +201,10 @@ export default function CatalogPage() {
       setCatalog(saved);
       setFlash('Catálogo guardado correctamente.');
       setTimeout(() => setFlash(''), 2500);
+      return true;
     } catch (err) {
       setError(errMsg(err, 'No se pudo guardar el catálogo'));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -233,8 +255,7 @@ export default function CatalogPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6 items-start">
-        <div className="space-y-6">
+      <div className="space-y-6">
           {/* ---------- Grupos ---------- */}
           <section className="bg-white border border-gray-200 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -287,31 +308,13 @@ export default function CatalogPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 flex-wrap">
-              <input
-                value={newGrupo.codigo}
-                placeholder="Código (ej. A1)"
-                onChange={(e) => setNewGrupo({ ...newGrupo, codigo: e.target.value.toUpperCase() })}
-                onKeyDown={(e) => e.key === 'Enter' && addGrupo()}
-                className="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 uppercase focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-              <input
-                value={newGrupo.etiqueta}
-                placeholder="Etiqueta (opcional)"
-                onChange={(e) => setNewGrupo({ ...newGrupo, etiqueta: e.target.value })}
-                className="flex-1 min-w-[140px] text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={newGrupo.edad}
-                placeholder="Edad"
-                onChange={(e) => setNewGrupo({ ...newGrupo, edad: e.target.value })}
-                className="w-20 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
+            <div className="mt-4 pt-4 border-t border-gray-100">
               <button
-                onClick={addGrupo}
+                onClick={() => {
+                  setNombreGrupo('');
+                  setError('');
+                  setGrupoModal(true);
+                }}
                 className="inline-flex items-center gap-1 text-xs font-medium bg-brand-50 text-brand-700 hover:bg-brand-100 px-3 py-2 rounded-lg"
               >
                 <Plus size={14} /> Añadir grupo
@@ -403,7 +406,10 @@ export default function CatalogPage() {
                       return (
                         <td key={nivel} className="px-4 py-3">
                           <button
-                            onClick={() => setActiveCell({ grupo: grupo.codigo, nivel })}
+                            onClick={() => {
+                              setActiveCell({ grupo: grupo.codigo, nivel });
+                              setModalCell(true);
+                            }}
                             className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
                               isActive
                                 ? 'border-brand-500 bg-brand-50'
@@ -432,23 +438,41 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        {/* ---------- Panel de edición de la celda ---------- */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 xl:sticky xl:top-6">
-          {!active ? (
-            <p className="text-sm text-gray-500">
-              Selecciona una celda de la matriz (Grupo × Nivel) para editar su proyecto.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-900">Grupo {activeCell.grupo}</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${LEVEL_BADGE_COLOR[activeCell.nivel]}`}
+        {/* ---------- Modal de edición de la celda (proyecto + competencias) ---------- */}
+        {modalCell && active && (
+          <Modal
+            title={`Grupo ${activeCell.grupo} · ${LEVEL_LABEL[activeCell.nivel]}`}
+            subtitle="Materia, dominio, meta general y competencias del proyecto."
+            onClose={() => setModalCell(false)}
+            footer={
+              <>
+                <button
+                  onClick={() => setModalCell(false)}
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg border border-gray-300"
                 >
-                  {LEVEL_LABEL[activeCell.nivel]}
-                </span>
-              </div>
-
+                  Cerrar
+                </button>
+                <button
+                  onClick={async () => {
+                    const ok = await handleSave();
+                    if (ok) setModalCell(false);
+                  }}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 text-sm font-medium bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white px-4 py-2 rounded-lg"
+                >
+                  {saving ? <Loader2 className="animate-spin" size={15} /> : <Save size={15} />}
+                  Guardar y cerrar
+                </button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              {error && (
+                <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-700 text-sm px-3 py-2 rounded-lg">
+                  <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
               <Field
                 label="Materia"
                 value={active.materia}
@@ -542,9 +566,55 @@ export default function CatalogPage() {
                 </div>
               </div>
             </div>
-          )}
-        </div>
-      </div>
+          </Modal>
+        )}
+
+        {/* ---------- Modal: añadir grupo (solo el nombre) ---------- */}
+        {grupoModal && (
+          <Modal
+            title="Añadir grupo"
+            subtitle="Escribe el nombre del grupo y listo; el código se genera automáticamente."
+            onClose={() => setGrupoModal(false)}
+            size="max-w-md"
+            footer={
+              <>
+                <button
+                  onClick={() => setGrupoModal(false)}
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg border border-gray-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarGrupo}
+                  className="inline-flex items-center gap-2 text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg"
+                >
+                  <Plus size={15} /> Añadir
+                </button>
+              </>
+            }
+          >
+            <label className="block">
+              <span className="text-xs font-medium text-gray-500">Nombre del grupo</span>
+              <input
+                autoFocus
+                value={nombreGrupo}
+                onChange={(e) => setNombreGrupo(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && confirmarGrupo()}
+                placeholder='p. ej. "A1" o "1° Primaria"'
+                className="mt-1 w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </label>
+            {nombreGrupo.trim() && (
+              <p className="text-[11px] text-gray-400 mt-2">
+                Código resultante:{' '}
+                <span className="font-mono font-medium text-gray-600">
+                  {codeFromNombre(nombreGrupo) || '—'}
+                </span>
+              </p>
+            )}
+            {error && <p className="text-xs text-rose-600 mt-2">{error}</p>}
+          </Modal>
+        )}
     </div>
   );
 }

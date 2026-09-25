@@ -2,9 +2,31 @@ import axios from 'axios';
 
 const api = axios.create({ baseURL: '/api' });
 
+// Si la sesión expira (401), vuelve a la pantalla de acceso
+api.interceptors.response.use(
+  (response) => response,
+  (err) => {
+    if (
+      err?.response?.status === 401 &&
+      !window.location.pathname.startsWith('/login')
+    ) {
+      window.location.assign('/login');
+    }
+    return Promise.reject(err);
+  }
+);
+
 // Mensaje de error legible desde cualquier respuesta fallida
 export const errMsg = (err, fallback = 'Ocurrió un error inesperado') =>
   err?.response?.data?.error || err?.message || fallback;
+
+// --- Autenticación ---
+export const login = (username, password) =>
+  api.post('/auth/login', { username, password }).then((r) => r.data);
+export const register = (username, password) =>
+  api.post('/auth/register', { username, password }).then((r) => r.data);
+export const logout = () => api.post('/auth/logout');
+export const me = () => api.get('/auth/me').then((r) => r.data);
 
 // --- Catálogo completo (grupos + competencias + proyectos) ---
 export const getCatalog = () => api.get('/projects').then((r) => r.data);

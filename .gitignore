@@ -11,6 +11,13 @@ npm-debug.log*
 # Archivos temporales de escritura (db.js usa tmp + rename)
 backend/src/data/*.tmp
 
+# Datos locales de usuarios (cada usuario tiene su propio catálogo y alumnos;
+# en Vercel estos datos viven en Vercel KV)
+backend/src/data/users.json
+backend/src/data/sessions.json
+backend/src/data/students.*.json
+backend/src/data/catalog.*.json
+
 # Editor / sistema
 .DS_Store
 Thumbs.db

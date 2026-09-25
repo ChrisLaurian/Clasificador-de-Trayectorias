@@ -5,13 +5,6 @@ const db = require('./src/data/db');
 
 const PORT = process.env.PORT || 4000;
 
-db.initOnce()
-  .then(() => {
-    const modo = db.isKV() ? 'Vercel KV' : 'archivos JSON locales';
-    console.log(`Datos listos (${modo})`);
-  })
-  .catch((err) => console.error('No se pudieron inicializar los datos:', err));
-
 app.listen(PORT, () => {
-  console.log(`API corriendo en http://localhost:${PORT}`);
+  console.log(`API corriendo en http://localhost:${PORT} (datos: ${db.isKV() ? 'Vercel KV' : 'JSON local'})`);
 });
