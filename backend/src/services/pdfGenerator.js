@@ -1,5 +1,4 @@
 const PDFDocument = require('pdfkit');
-const db = require('../data/db');
 
 const NIVEL_LABEL = { B: 'Básico', I: 'Intermedio', A: 'Avanzado' };
 
@@ -30,7 +29,8 @@ function colX(index) {
  * (Abstracción, Pensamiento lógico, ... Competencias digitales).
  */
 function generateStudentPDF(student, options = {}) {
-  const competencias = options.competencias || db.getCompetencias();
+  const competencias = options.competencias || [];
+  const grupos = options.grupos || [];
   const institucion = options.institucion || 'Institución Educativa';
 
   return new Promise((resolve, reject) => {
@@ -72,7 +72,7 @@ function generateStudentPDF(student, options = {}) {
       doc.moveDown(0.5);
 
       // --- Datos generales ---
-      const grupoCfg = db.getGrupos().find((g) => g.codigo === student.grupo);
+      const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
       const grupoTxt = [
         student.grupo,
         grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '',

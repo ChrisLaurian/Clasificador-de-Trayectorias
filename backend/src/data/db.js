@@ -1,16 +1,23 @@
 // db.js
-// Persistencia simple en archivos JSON (fácil de migrar a SQLite/PostgreSQL después).
-// Se eligió este enfoque por simplicidad, tal como pide el alcance del proyecto.
+// Único punto de acceso a los datos.
+//
+// Dos drivers con la MISMA interfaz asíncrona:
+//   - KV (Vercel KV / Upstash): en producción (Vercel) — JSON completo por clave.
+//   - Archivos JSON locales: en desarrollo (`npm run dev` en backend/).
+//
+// Migrar a SQLite/PostgreSQL sigue implicando reescribir solo este archivo.
 
 const fs = require('fs');
 const path = require('path');
+const { LEVELS, LEVEL_LABEL } = require('../constants');
+const { kvAvailable, kvGet, kvSet } = require('./kvClient');
 
 const DATA_DIR = __dirname;
 const STUDENTS_FILE = path.join(DATA_DIR, 'students.json');
 const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
 
-const LEVELS = ['B', 'I', 'A']; // Básico, Intermedio, Avanzado
-const LEVEL_LABEL = { B: 'Básico', I: 'Intermedio', A: 'Avanzado' };
+const CATALOG_KEY = 'clasificador:catalog:v1';
+const STUDENTS_KEY = 'clasificador:students:v1';
 
 // Grupos por defecto (se pueden añadir/editar/eliminar desde el frontend:
 // p. ej. subgrupos A1, A2, A3 dentro del grupo principal A).
@@ -52,26 +59,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function ensureFile(filePath, defaultData) {
-  if (!fs.existsSync(filePath)) {
-    writeJSON(filePath, defaultData);
-  }
-}
-
-function readJSON(filePath) {
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw || '[]');
-}
-
-function writeJSON(filePath, data) {
-  // Escritura atómica (tmp + rename) para no corromper el archivo si el
-  // proceso muere a mitad de escritura.
-  const tmp = `${filePath}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
-  fs.renameSync(tmp, filePath);
-}
-
-// --- Normalización del catálogo -------------------------------------------------
+// --- Helpers de normalización del catálogo -------------------------------------
 
 function ensureContenido(proyecto, competencias) {
   if (!proyecto.contenido || typeof proyecto.contenido !== 'object') {
@@ -173,48 +161,130 @@ function buildDefaultCatalog() {
   return { grupos: clone(DEFAULT_GRUPOS), competencias: clone(CORE_COMPETENCIAS), proyectos: [] };
 }
 
-function loadCatalog() {
-  let raw;
+// --- Almacenamiento (KV o archivos locales) ------------------------------------
+
+const useKV = () => kvAvailable();
+
+function readJSONFile(filePath) {
+  if (!fs.existsSync(filePath)) return null;
   try {
-    raw = readJSON(PROJECTS_FILE);
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    if (!raw || !raw.trim()) return null;
+    return JSON.parse(raw);
   } catch (err) {
-    throw new Error(`No se pudo leer el catálogo (projects.json): ${err.message}`);
+    throw new Error(`No se pudo leer ${path.basename(filePath)}: ${err.message}`);
   }
+}
+
+function writeJSONFile(filePath, data) {
+  // Escritura atómica (tmp + rename) para no corromper el archivo local.
+  const tmp = `${filePath}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tmp, filePath);
+}
+
+async function readRawCatalog() {
+  if (useKV()) return kvGet(CATALOG_KEY);
+  return readJSONFile(PROJECTS_FILE);
+}
+
+async function writeRawCatalog(data) {
+  if (useKV()) return kvSet(CATALOG_KEY, data);
+  writeJSONFile(PROJECTS_FILE, data);
+}
+
+async function readRawStudents() {
+  if (useKV()) return kvGet(STUDENTS_KEY);
+  return readJSONFile(STUDENTS_FILE);
+}
+
+async function writeRawStudents(data) {
+  if (useKV()) return kvSet(STUDENTS_KEY, data);
+  writeJSONFile(STUDENTS_FILE, data);
+}
+
+// Semilla: en KV arrancamos con los archivos JSON empaquetados (tus datos actuales).
+async function seedStudents() {
+  return readJSONFile(STUDENTS_FILE) || [];
+}
+
+async function loadCatalog() {
+  let raw = await readRawCatalog();
+  let sembrado = false;
+  // Semilla: si el almacén está vacío (KV recién creado) usamos los JSON empaquetados.
+  if (raw === null || raw === undefined) {
+    raw = readJSONFile(PROJECTS_FILE);
+    sembrado = true;
+  }
+  if (raw === null || raw === undefined) {
+    raw = buildDefaultCatalog();
+    sembrado = true;
+  }
+
   const { catalog, dirty } = normalizeCatalog(raw);
-  if (dirty) writeJSON(PROJECTS_FILE, catalog);
+  if (dirty || sembrado) await writeRawCatalog(catalog);
   return catalog;
 }
 
-ensureFile(STUDENTS_FILE, []);
-ensureFile(PROJECTS_FILE, buildDefaultCatalog());
+async function loadStudents() {
+  let raw = await readRawStudents();
+  if (raw === null || raw === undefined) {
+    raw = await seedStudents();
+    if (useKV()) await writeRawStudents(raw); // persiste la semilla en KV
+    return raw;
+  }
+  return Array.isArray(raw) ? raw : [];
+}
 
-const catalog = loadCatalog();
+// Inicialización única por proceso: siembra KV si hace falta y sincroniza los
+// snapshots de alumnos creados antes de existir las competencias.
+let initPromise = null;
+function initOnce() {
+  if (!initPromise) {
+    initPromise = (async () => {
+      const catalog = await loadCatalog();
+      const students = await loadStudents();
+
+      const incompletos = students.some(
+        (s) => !s.proyectoAsignado || !s.proyectoAsignado.competencias
+      );
+      if (incompletos) {
+        const { syncStudentCompetencias } = require('../services/classifier');
+        const sincronizados = students.map((s) =>
+          syncStudentCompetencias(s, catalog.competencias, catalog.proyectos)
+        );
+        await writeRawStudents(sincronizados);
+      }
+    })().catch((err) => {
+      initPromise = null; // reintenta en la siguiente petición
+      throw err;
+    });
+  }
+  return initPromise;
+}
 
 module.exports = {
   LEVELS,
   LEVEL_LABEL,
   DEFAULT_GRUPOS,
   CORE_COMPETENCIAS,
-  getCatalog: () => catalog,
-  getGrupos: () => catalog.grupos,
-  getCompetencias: () => catalog.competencias,
-  getProjects: () => catalog.proyectos,
-  getStudents: () => {
-    const students = readJSON(STUDENTS_FILE);
-    return Array.isArray(students) ? students : [];
-  },
-  saveStudents: (data) => writeJSON(STUDENTS_FILE, data),
-  saveCatalog: ({ grupos, competencias, proyectos }) => {
+  emptyContenido,
+  isKV: useKV,
+  initOnce,
+
+  getCatalog: () => loadCatalog(),
+
+  saveCatalog: async ({ grupos, competencias, proyectos }) => {
+    const actual = await loadCatalog();
     const next = normalizeCatalog({
-      grupos: grupos || catalog.grupos,
-      competencias: competencias || catalog.competencias,
-      proyectos: proyectos || catalog.proyectos,
+      grupos: grupos || actual.grupos,
+      competencias: competencias || actual.competencias,
+      proyectos: proyectos || actual.proyectos,
     }).catalog;
-    writeJSON(PROJECTS_FILE, next);
-    // Actualiza el catálogo en memoria (mismo objeto vivo).
-    catalog.grupos = next.grupos;
-    catalog.competencias = next.competencias;
-    catalog.proyectos = next.proyectos;
-    return catalog;
+    await writeRawCatalog(next);
+    return next;
   },
+
+  getStudents: () => loadStudents(),
+  saveStudents: async (data) => writeRawStudents(Array.isArray(data) ? data : []),
 };

@@ -1,4 +1,4 @@
-const db = require('../data/db');
+const { LEVEL_LABEL } = require('../constants');
 
 // Reemplaza plantillas dentro de los textos del catálogo al clasificar:
 // {{nombre}}, {{grupo}}, {{nivel}}, {{edad}}
@@ -7,7 +7,7 @@ function applyTemplate(text, student) {
   return text
     .replace(/\{\{nombre\}\}/gi, student.nombre || '')
     .replace(/\{\{grupo\}\}/gi, student.grupo || '')
-    .replace(/\{\{nivel\}\}/gi, db.LEVEL_LABEL[student.nivel] || student.nivel || '')
+    .replace(/\{\{nivel\}\}/gi, LEVEL_LABEL[student.nivel] || student.nivel || '')
     .replace(/\{\{edad\}\}/gi, student.edad !== null && student.edad !== undefined ? String(student.edad) : '');
 }
 
@@ -35,10 +35,16 @@ function buildCompetenciasSnapshot(match, student, competencias) {
  * Asocia a alumno el proyecto correspondiente según su Grupo y Nivel.
  * Guarda una copia (snapshot) del proyecto en `proyectoAsignado` para permitir
  * ediciones individuales sin alterar el catálogo maestro.
+ *
+ * @param student alumno a clasificar
+ * @param catalog catálogo completo { grupos, competencias, proyectos }
  */
-function classifyStudent(student, projects = db.getProjects()) {
-  const competencias = db.getCompetencias();
-  const grupoCfg = db.getGrupos().find((g) => g.codigo === student.grupo);
+function classifyStudent(student, catalog) {
+  const grupos = (catalog && catalog.grupos) || [];
+  const competencias = (catalog && catalog.competencias) || [];
+  const projects = (catalog && catalog.proyectos) || [];
+
+  const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
   const edad = grupoCfg ? grupoCfg.edad : null;
 
   const match = projects.find(
@@ -56,11 +62,7 @@ function classifyStudent(student, projects = db.getProjects()) {
       materia: src.materia || '',
       dominioDisciplinar: src.dominioDisciplinar || '',
       metaGeneral: src.metaGeneral || '',
-      competencias: buildCompetenciasSnapshot(
-        src,
-        { ...student, edad },
-        competencias
-      ),
+      competencias: buildCompetenciasSnapshot(src, { ...student, edad }, competencias),
     },
     clasificado: Boolean(match),
   };
@@ -73,7 +75,7 @@ function classifyStudent(student, projects = db.getProjects()) {
  *  - siembra las competencias nuevas desde el catálogo,
  *  - elimina las que ya no existen.
  */
-function syncStudentCompetencias(student, competencias, projects = db.getProjects()) {
+function syncStudentCompetencias(student, competencias, projects) {
   const snap = student.proyectoAsignado || {};
   const existing = snap.competencias || {};
   const match = projects.find(

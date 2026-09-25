@@ -1,14 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../data/db');
+const asyncHandler = require('../asyncHandler');
 const { syncStudentCompetencias } = require('../services/classifier');
 
 const CODE_RE = /^[A-Za-z0-9]{1,12}$/;
 
 // GET /api/projects -> catálogo completo { grupos, competencias, proyectos }
-router.get('/', (req, res) => {
-  res.json(db.getCatalog());
-});
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    res.json(await db.getCatalog());
+  })
+);
 
 function validateGrupos(grupos) {
   if (!Array.isArray(grupos) || grupos.length === 0) {
@@ -58,7 +62,10 @@ function validateProyectos(proyectos, grupos) {
   for (const p of proyectos) {
     if (!codes.has(p.grupo)) return `Proyecto con grupo desconocido: "${p.grupo}"`;
     if (!db.LEVELS.includes(p.nivel)) return `Proyecto con nivel inválido: "${p.nivel}"`;
-    if (p.contenido !== undefined && (typeof p.contenido !== 'object' || p.contenido === null || Array.isArray(p.contenido))) {
+    if (
+      p.contenido !== undefined &&
+      (typeof p.contenido !== 'object' || p.contenido === null || Array.isArray(p.contenido))
+    ) {
       return 'El contenido de un proyecto debe ser un objeto';
     }
   }
@@ -66,47 +73,50 @@ function validateProyectos(proyectos, grupos) {
 }
 
 // PUT /api/projects -> guarda el catálogo completo { grupos, competencias, proyectos }
-router.put('/', (req, res) => {
-  const body = req.body || {};
-  const esArreglo = Array.isArray(body); // compatibilidad con el formato antiguo
-  const grupos = esArreglo ? undefined : body.grupos;
-  const competencias = esArreglo ? undefined : body.competencias;
-  const proyectos = esArreglo ? body : body.proyectos;
+router.put(
+  '/',
+  asyncHandler(async (req, res) => {
+    const body = req.body || {};
+    const esArreglo = Array.isArray(body); // compatibilidad con el formato antiguo
+    const actual = await db.getCatalog();
 
-  const actual = db.getCatalog();
-  const nextGrupos = grupos || actual.grupos;
-  const nextCompetencias = competencias || actual.competencias;
-  const nextProyectos = proyectos || actual.proyectos;
+    const nextGrupos = esArreglo ? actual.grupos : body.grupos || actual.grupos;
+    const nextCompetencias = esArreglo ? actual.competencias : body.competencias || actual.competencias;
+    const nextProyectos = esArreglo ? body : body.proyectos || actual.proyectos;
 
-  const error =
-    validateGrupos(nextGrupos) ||
-    validateCompetencias(nextCompetencias) ||
-    validateProyectos(nextProyectos, nextGrupos);
-  if (error) return res.status(400).json({ error });
+    const error =
+      validateGrupos(nextGrupos) ||
+      validateCompetencias(nextCompetencias) ||
+      validateProyectos(nextProyectos, nextGrupos);
+    if (error) return res.status(400).json({ error });
 
-  // Bloquea la eliminación de un grupo que todavía tiene alumnos.
-  const codigos = new Set(nextGrupos.map((g) => g.codigo));
-  const students = db.getStudents();
-  const huerfanos = students.filter((s) => !codigos.has(s.grupo));
-  if (huerfanos.length) {
-    const gruposPeligro = [...new Set(huerfanos.map((s) => s.grupo))].join(', ');
-    return res.status(409).json({
-      error: `No se puede eliminar el grupo ${gruposPeligro}: tiene ${huerfanos.length} alumno(s). Muévelos o elimínalos primero.`,
+    // Bloquea la eliminación de un grupo que todavía tiene alumnos.
+    const codigos = new Set(nextGrupos.map((g) => g.codigo));
+    const students = await db.getStudents();
+    const huerfanos = students.filter((s) => !codigos.has(s.grupo));
+    if (huerfanos.length) {
+      const gruposPeligro = [...new Set(huerfanos.map((s) => s.grupo))].join(', ');
+      return res.status(409).json({
+        error: `No se puede eliminar el grupo ${gruposPeligro}: tiene ${huerfanos.length} alumno(s). Muévelos o elimínalos primero.`,
+      });
+    }
+
+    const catalog = await db.saveCatalog({
+      grupos: nextGrupos,
+      competencias: nextCompetencias,
+      proyectos: nextProyectos,
     });
-  }
 
-  const catalog = db.saveCatalog({ grupos: nextGrupos, competencias: nextCompetencias, proyectos: nextProyectos });
+    // Sincroniza los snapshots de los alumnos con la lista de competencias.
+    const studentsSync = students.map((s) =>
+      syncStudentCompetencias(s, catalog.competencias, catalog.proyectos)
+    );
+    if (JSON.stringify(studentsSync) !== JSON.stringify(students)) {
+      await db.saveStudents(studentsSync);
+    }
 
-  // Sincroniza los snapshots de los alumnos con la lista de competencias.
-  const proyectosSync = catalog.proyectos;
-  const studentsSync = students.map((s) =>
-    syncStudentCompetencias(s, catalog.competencias, proyectosSync)
-  );
-  if (JSON.stringify(studentsSync) !== JSON.stringify(students)) {
-    db.saveStudents(studentsSync);
-  }
-
-  res.json(catalog);
-});
+    res.json(catalog);
+  })
+);
 
 module.exports = router;

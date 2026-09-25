@@ -9,12 +9,17 @@ y generar documentos PDF individuales, ZIP por grupo o exportaciones masivas
 
 ```
 Clasificador-de-Trayectorias/
+├── api/
+│   └── index.js               # Entry serverless de Vercel -> Express
+├── vercel.json                # Build, rewrites (/api/* y SPA) y límites
 ├── backend/                     # API Node.js + Express
-│   ├── server.js                # Punto de entrada (+ migración al arrancar)
+│   ├── server.js                # Punto de entrada local (npm run dev)
 │   ├── src/
+│   │   ├── app.js               # App Express sin listen (local + Vercel)
 │   │   ├── data/
-│   │   │   ├── db.js            # Persistencia JSON (migrable a SQLite/Postgres)
-│   │   │   ├── students.json    # (se crea automáticamente)
+│   │   │   ├── db.js            # Único punto de datos: driver KV o JSON local
+│   │   │   ├── kvClient.js      # Cliente REST de Vercel KV (Upstash)
+│   │   │   ├── students.json    # Semilla/datos locales de alumnos
 │   │   │   └── projects.json    # Catálogo: grupos + competencias + proyectos
 │   │   ├── routes/
 │   │   │   ├── projects.js      # Catálogo completo (grupos, competencias, celdas)
@@ -63,6 +68,33 @@ npm run dev         # http://localhost:5173
 
 El `vite.config.js` incluye un proxy de `/api` hacia `http://localhost:4000`.
 
+## Despliegue en Vercel (producción)
+
+Todo corre en un único proyecto de Vercel: el SPA (Vite) y la API (function
+`api/index.js`), con **Vercel KV** como base de datos en la nube.
+
+1. **Importa el repositorio** en Vercel (framework detectado: Vite). El
+   `vercel.json` de la raíz ya configura instalación, build (`frontend/dist`),
+   el rewrite de `/api/*` a la function y el fallback SPA para React Router.
+2. **Crea el almacén KV**: Vercel → *Storage* → *KV* (Upstash). Al conectarlo,
+   Vercel inyecta `KV_REST_API_URL` y `KV_REST_API_TOKEN` automáticamente.
+3. **Deploy**. En la primera petición, `db.js` siembra KV con los JSON
+   empaquetados (`students.json` y `projects.json`): tus datos locales pasan a
+   la nube sin pasos extra.
+4. Verifica: `https://<tu-proyecto>.vercel.app/api/health` debe responder
+   `{"status":"ok","storage":"kv"}`.
+
+Notas de la nube (plan Hobby):
+
+- **Sin variables KV, la app usa los JSON locales** → `storage: "json"` en
+  health. Ese es también el modo de desarrollo local.
+- Límite de subida: **4 MB** (XLSX/CSV); respuestas de ~4.5 MB (los ZIP de
+  grupos muy grandes pueden excederlo).
+- `maxDuration: 60` s por invocación (PDF/ZIP largos).
+- Los límites de concurrencia y vida de la function aplican a cada petición:
+  no hay estado en memoria entre peticiones (el catálogo se lee de KV en cada
+  una, operación barata).
+
 ## Flujo de uso
 
 1. **Catálogo**
@@ -76,7 +108,7 @@ El `vite.config.js` incluye un proxy de `/api` hacia `http://localhost:4000`.
      En la descripción base se pueden usar `{{nombre}}`, `{{grupo}}`, `{{nivel}}`
      y `{{edad}}`, que se reemplazan por cada alumno.
 2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel,
-   diagnostico, intereses, fortalezas, areasMejora` (máx. 10 MB).
+   diagnostico, intereses, fortalezas, areasMejora` (máx. 4 MB).
 3. **Alumnos** — Filtra por grupo/nivel/búsqueda y abre el panel individual para
    editar el perfil y **cada competencia por separado** (sin afectar el catálogo).
    El botón "Restaurar del catálogo" vuelve a los valores maestros.
@@ -98,9 +130,11 @@ El `vite.config.js` incluye un proxy de `/api` hacia `http://localhost:4000`.
 
 ## Notas de diseño
 
-- **Persistencia**: JSON en disco con escritura atómica (tmp + rename).
-  `src/data/db.js` es el único punto de acceso a los datos — migrar a SQLite o
-  PostgreSQL implica reescribir solo ese archivo.
+- **Persistencia**: `src/data/db.js` es el único punto de acceso a los datos y
+  expone una interfaz **asíncrona** con dos drivers intercambiables:
+  **Vercel KV (Upstash)** cuando existen las variables `KV_REST_API_*`
+  (producción), o **JSON local con escritura atómica** (desarrollo). La
+  migración a SQLite/PostgreSQL seguiría reescribiendo solo ese archivo.
 - **Snapshot por alumno**: `classifier.js` guarda una copia del proyecto
   (`proyectoAsignado`) al clasificar, incluidas las competencias. Esto permite
   editar un alumno sin que cambie retroactivamente si luego se edita el catálogo.
@@ -111,8 +145,9 @@ El `vite.config.js` incluye un proxy de `/api` hacia `http://localhost:4000`.
   celdas de altura dinámica, saltos de página con encabezado repetido y pie con
   número de página.
 - **Errores**: la API responde JSON con el estado adecuado (400/404/409/500),
-  hay límite de tamaño en subidas (10 MB) y el frontend muestra banners de error
-  en cada operación (los indicadores de carga nunca quedan trabados).
+  hay límite de tamaño en subidas (4 MB, límite de Vercel) y el frontend muestra
+  banners de error en cada operación (los indicadores de carga nunca quedan
+  trabados).
 - **Siguientes pasos sugeridos**: autenticación de usuarios/roles, historial de
   versiones por alumno, plantilla DOCX editable y migración de `db.js` a
   PostgreSQL con Prisma/Knex cuando el volumen lo requiera.
