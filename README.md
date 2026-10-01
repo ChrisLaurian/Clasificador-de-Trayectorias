@@ -149,7 +149,10 @@ Notas de la nube (plan Hobby):
      celdas con texto. Al terminar muestra un resumen (filas, celdas, competencias
      creadas).
 2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel,
-   diagnostico, intereses, fortalezas, areasMejora` (máx. 4 MB).
+   diagnostico, intereses, fortalezas, areasMejora` (máx. 4 MB). Tolera títulos
+   antes de los encabezados (p. ej. `GRUPO A1`), filas vacías y acentos o
+   mayúsculas variadas (`Básico`, `basico`, `Intermeio`...); el nivel se toma
+   por la inicial (**B**, **I**, **A**).
 3. **Alumnos** — Filtra por grupo/nivel/búsqueda y abre el panel individual para
    editar el perfil y **cada competencia por separado** (sin afectar el catálogo).
    El botón "Restaurar del catálogo" vuelve a los valores maestros.

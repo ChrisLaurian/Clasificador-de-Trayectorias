@@ -97,7 +97,17 @@ function parseFile(buffer, filename = '') {
 
   const headerIdx = findHeaderRow(matrix);
   if (headerIdx === -1) {
-    const headers = (matrix[0] || []).map((c) => String(c).trim()).filter(Boolean).join(', ');
+    const tempranas = matrix.slice(0, 15);
+    const esAlumnos = tempranas.some((fila) =>
+      (fila || []).map(norm).some((c) => c === 'nombre' || c === 'alumno')
+    );
+    if (esAlumnos) {
+      throw new Error(
+        'Este archivo es la lista de alumnos (nombre, grupo, nivel): sirve para dar de alta alumnos en "Carga Masiva", no para importar trayectorias. Para trayectorias usa un archivo con Nivel, Competencia, Trimestre 1-3 y Meta General.'
+      );
+    }
+    const fila = tempranas.find((f) => (f || []).some((c) => String(c ?? '').trim())) || [];
+    const headers = fila.map((c) => String(c).trim()).filter(Boolean).join(', ');
     throw new Error(
       `No se detectaron las columnas "Nivel" y "Competencia". Encabezados encontrados: ${headers || '(ninguno)'}`
     );
@@ -194,4 +204,4 @@ function applyToCatalog(catalog, filas, gruposDestino = []) {
   return resumen;
 }
 
-module.exports = { parseFile, applyToCatalog, norm, toNivel };
+module.exports = { parseFile, applyToCatalog, norm, toNivel, bufferToText };
