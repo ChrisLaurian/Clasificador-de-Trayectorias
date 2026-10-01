@@ -32,6 +32,14 @@ export const me = () => api.get('/auth/me').then((r) => r.data);
 export const getCatalog = () => api.get('/projects').then((r) => r.data);
 export const saveCatalog = (catalog) => api.put('/projects', catalog).then((r) => r.data);
 
+// Importa contenido del catálogo desde un CSV/Excel hacia los grupos elegidos
+export const importCatalog = (file, grupos) => {
+  const form = new FormData();
+  form.append('file', file);
+  if (grupos?.length) form.append('grupos', grupos.join(','));
+  return api.post('/projects/import', form).then((r) => r.data);
+};
+
 // --- Alumnos ---
 export const getStudents = (params = {}) => api.get('/students', { params }).then((r) => r.data);
 export const createStudent = (data) => api.post('/students', data).then((r) => r.data);

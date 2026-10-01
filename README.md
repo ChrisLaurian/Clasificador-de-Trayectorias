@@ -140,6 +140,14 @@ Notas de la nube (plan Hobby):
      general y, por competencia: descripción base del alumno, Trimestre 1–3 y Meta.
      En la descripción base se pueden usar `{{nombre}}`, `{{grupo}}`, `{{nivel}}`
      y `{{edad}}`, que se reemplazan por cada alumno.
+   - **Importar archivo (CSV/Excel)**: sube un archivo con las trayectorias
+     (columnas `Nivel`, `Competencia`, `Diagnóstico`, `Trimestre 1`, `Trimestre 2`,
+     `Trimestre 3`, `Meta General`, con o sin acentos, en cualquier orden) y
+     rellena las celdas de los grupos que selecciones en el modal. Detecta las
+     columnas automáticamente (también `Grupo` opcional por fila), crea las
+     competencias que no existan, respeta los acentos y solo sobrescribe las
+     celdas con texto. Al terminar muestra un resumen (filas, celdas, competencias
+     creadas).
 2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel,
    diagnostico, intereses, fortalezas, areasMejora` (máx. 4 MB).
 3. **Alumnos** — Filtra por grupo/nivel/búsqueda y abre el panel individual para
@@ -156,6 +164,7 @@ Notas de la nube (plan Hobby):
 | --- | --- | --- |
 | POST / GET | `/api/auth/register`, `/login`, `/logout`, `/me` | Registro abierto y sesión |
 | GET / PUT | `/api/projects` | Catálogo completo `{grupos, competencias, proyectos}` (del usuario) |
+| POST | `/api/projects/import` | Importa trayectorias desde CSV/Excel (multipart `file` + `grupos`, detecta columnas) |
 | GET / POST / PUT / DELETE | `/api/students...` | CRUD de alumnos y `/:id/reclasificar` (del usuario) |
 | POST | `/api/upload` | Carga masiva Excel/CSV |
 | GET | `/api/documents/student/:id` | PDF individual |

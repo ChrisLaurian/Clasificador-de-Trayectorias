@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Save, LayoutGrid, Loader2, CheckCircle2, AlertTriangle, Plus, Trash2, Users, Sparkles } from 'lucide-react';
-import { getCatalog, saveCatalog, errMsg } from '../api/client';
+import { Save, LayoutGrid, Loader2, CheckCircle2, AlertTriangle, Plus, Trash2, Users, Sparkles, FileUp } from 'lucide-react';
+import { getCatalog, saveCatalog, importCatalog, errMsg } from '../api/client';
 import { LEVELS, LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
 import Modal from '../components/Modal.jsx';
 
@@ -47,6 +47,12 @@ export default function CatalogPage() {
   const [modalCell, setModalCell] = useState(false); // modal de edición de celda
   const [grupoModal, setGrupoModal] = useState(false); // modal "Añadir grupo"
   const [nombreGrupo, setNombreGrupo] = useState('');
+  const [importModal, setImportModal] = useState(false); // modal "Importar archivo"
+  const [importFile, setImportFile] = useState(null);
+  const [importGrupos, setImportGrupos] = useState([]);
+  const [importando, setImportando] = useState(false);
+  const [importResumen, setImportResumen] = useState(null);
+  const [importError, setImportError] = useState('');
   const [newComp, setNewComp] = useState('');
   const [grupoDraft, setGrupoDraft] = useState({}); // código temporal mientras se escribe
 
@@ -114,6 +120,45 @@ export default function CatalogPage() {
     crearGrupo(codigo, codigo === nombre.toUpperCase() ? '' : nombre);
     setNombreGrupo('');
     setGrupoModal(false);
+  };
+
+  // --- Importar archivo (CSV/Excel) ---
+  const abrirImport = () => {
+    setImportFile(null);
+    setImportGrupos([]);
+    setImportResumen(null);
+    setImportError('');
+    setImportModal(true);
+  };
+
+  const toggleImportGrupo = (codigo) =>
+    setImportGrupos((g) => (g.includes(codigo) ? g.filter((c) => c !== codigo) : [...g, codigo]));
+
+  const ejecutarImport = async () => {
+    if (!importFile) {
+      setImportError('Selecciona un archivo CSV o Excel');
+      return;
+    }
+    setImportando(true);
+    setImportError('');
+    try {
+      const r = await importCatalog(importFile, importGrupos);
+      setCatalog(r.catalog);
+      setImportResumen(r);
+      setFlash(`Importación completada: ${r.celdas} celdas actualizadas`);
+      setTimeout(() => setFlash(''), 4000);
+    } catch (err) {
+      setImportError(errMsg(err, 'No se pudo importar el archivo'));
+    } finally {
+      setImportando(false);
+    }
+  };
+
+  const cerrarImport = () => {
+    setImportModal(false);
+    setImportFile(null);
+    setImportResumen(null);
+    setImportError('');
   };
 
   const updateGrupo = (codigo, patch) =>
@@ -308,7 +353,7 @@ export default function CatalogPage() {
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
               <button
                 onClick={() => {
                   setNombreGrupo('');
@@ -318,6 +363,12 @@ export default function CatalogPage() {
                 className="inline-flex items-center gap-1 text-xs font-medium bg-brand-50 text-brand-700 hover:bg-brand-100 px-3 py-2 rounded-lg"
               >
                 <Plus size={14} /> Añadir grupo
+              </button>
+              <button
+                onClick={abrirImport}
+                className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg"
+              >
+                <FileUp size={14} /> Importar archivo (CSV/Excel)
               </button>
             </div>
           </section>
@@ -613,6 +664,134 @@ export default function CatalogPage() {
               </p>
             )}
             {error && <p className="text-xs text-rose-600 mt-2">{error}</p>}
+          </Modal>
+        )}
+
+        {/* ---------- Modal: importar archivo (CSV/Excel) ---------- */}
+        {importModal && (
+          <Modal
+            title="Importar trayectorias (CSV/Excel)"
+            subtitle="Detecta Nivel, Competencia, Diagnóstico, Trimestre 1–3 y Meta General (con o sin acentos) y rellena las celdas de los grupos elegidos."
+            onClose={cerrarImport}
+            size="max-w-lg"
+            footer={
+              importResumen ? (
+                <button
+                  onClick={cerrarImport}
+                  className="text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg"
+                >
+                  Cerrar
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={cerrarImport}
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg border border-gray-300"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={ejecutarImport}
+                    disabled={importando}
+                    className="inline-flex items-center gap-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white px-4 py-2 rounded-lg"
+                  >
+                    {importando ? <Loader2 className="animate-spin" size={15} /> : <FileUp size={15} />}
+                    Importar
+                  </button>
+                </>
+              )
+            }
+          >
+            {!importResumen ? (
+              <div className="space-y-4">
+                {importError && (
+                  <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 text-rose-700 text-sm px-3 py-2 rounded-lg">
+                    <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+                    <span>{importError}</span>
+                  </div>
+                )}
+
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-500">Archivo (.csv, .xlsx)</span>
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls,text/csv"
+                    onChange={(e) => {
+                      setImportFile(e.target.files?.[0] || null);
+                      setImportError('');
+                    }}
+                    className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700 hover:file:bg-emerald-100"
+                  />
+                  {importFile && (
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      {importFile.name} · {Math.max(1, Math.round(importFile.size / 1024))} KB
+                    </p>
+                  )}
+                </label>
+
+                <div>
+                  <span className="text-xs font-medium text-gray-500">
+                    Grupos destino (si el archivo trae columna "Grupo", se aplica por fila)
+                  </span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {catalog.grupos.map((g) => (
+                      <label
+                        key={g.codigo}
+                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                          importGrupos.includes(g.codigo)
+                            ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={importGrupos.includes(g.codigo)}
+                          onChange={() => toggleImportGrupo(g.codigo)}
+                          className="accent-emerald-600"
+                        />
+                        {g.codigo}
+                        {g.etiqueta ? ` · ${g.etiqueta}` : ''}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-gray-400 leading-relaxed">
+                  "Diagnóstico" se guarda como descripción del alumno; las competencias que no
+                  existan se crean automáticamente. Solo se sobrescriben las celdas que el archivo
+                  trae con texto.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 text-sm">
+                <p className="flex items-center gap-2 font-medium text-gray-800">
+                  <CheckCircle2 size={17} className="text-emerald-600" /> Importación completada
+                </p>
+                <ul className="space-y-1.5 text-gray-600">
+                  <li>
+                    <span className="text-gray-400">Columnas detectadas:</span>{' '}
+                    {Object.values(importResumen.columnas || {}).filter(Boolean).join(' · ')}
+                  </li>
+                  <li>
+                    <span className="text-gray-400">Filas leídas:</span> {importResumen.filas}
+                    {importResumen.descartadas ? ` (${importResumen.descartadas} descartadas)` : ''}
+                  </li>
+                  <li>
+                    <span className="text-gray-400">Grupos actualizados:</span>{' '}
+                    {importResumen.grupos.join(', ')}
+                  </li>
+                  <li>
+                    <span className="text-gray-400">Celdas escritas:</span> {importResumen.celdas}
+                  </li>
+                  {importResumen.competenciasCreadas?.length > 0 && (
+                    <li>
+                      <span className="text-gray-400">Competencias creadas:</span>{' '}
+                      {importResumen.competenciasCreadas.join(', ')}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
           </Modal>
         )}
     </div>
