@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Save, RefreshCcw, FileDown, Loader2, AlertTriangle } from 'lucide-react';
 import { updateStudent, reclassifyStudent, downloadStudentPDF, errMsg } from '../api/client';
-import { LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
+import { LEVELS, LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
 
 // Tipos de aprendizaje (VARK) para el selector de cada alumno.
 const TIPOS_APRENDIZAJE = ['Visual', 'Auditivo', 'Lectura/Escritura', 'Kinestésico'];
@@ -38,6 +38,14 @@ export default function StudentEditPanel({ student, competencias: catalogoCompet
     }));
 
   const handleSave = async () => {
+    if (
+      form.nivel !== student.nivel &&
+      !window.confirm(
+        'Al cambiar de nivel, el alumno se reclasifica con la celda nueva del catálogo y se descartan sus ediciones individuales. ¿Continuar?'
+      )
+    ) {
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -103,11 +111,18 @@ export default function StudentEditPanel({ student, competencias: catalogoCompet
             <h2 className="font-semibold text-gray-900">{form.nombre}</h2>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-gray-500">Grupo {form.grupo}</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${LEVEL_BADGE_COLOR[form.nivel]}`}
+              <select
+                value={form.nivel}
+                onChange={(e) => setPerfil('nivel', e.target.value)}
+                title="Cambiar nivel: Básico, Intermedio o Avanzado"
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 ${LEVEL_BADGE_COLOR[form.nivel] || ''}`}
               >
-                {LEVEL_LABEL[form.nivel]}
-              </span>
+                {LEVELS.map((n) => (
+                  <option key={n} value={n}>
+                    {LEVEL_LABEL[n]}
+                  </option>
+                ))}
+              </select>
               {form.edad !== null && form.edad !== undefined && (
                 <span className="text-xs text-gray-500">{form.edad} años</span>
               )}
