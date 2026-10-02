@@ -59,6 +59,9 @@ router.post(
       intereses: body.intereses || '',
       fortalezas: body.fortalezas || '',
       areasMejora: body.areasMejora || '',
+      estiloAprendizaje: body.estiloAprendizaje || '',
+      ...(body.fechaCreacion !== undefined ? { fechaCreacion: body.fechaCreacion } : {}),
+      ...(body.fechaRevision !== undefined ? { fechaRevision: body.fechaRevision } : {}),
     };
     const clasificado = classifyStudent(nuevo, catalog);
     students.push(clasificado);

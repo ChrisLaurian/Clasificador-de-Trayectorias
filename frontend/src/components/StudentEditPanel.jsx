@@ -127,8 +127,25 @@ export default function StudentEditPanel({ student, competencias: catalogoCompet
             <h3 className="text-sm font-semibold text-gray-700">Perfil del alumno</h3>
             <TextArea label="Diagnóstico" value={form.diagnostico} onChange={(v) => setPerfil('diagnostico', v)} />
             <TextArea label="Intereses" value={form.intereses} onChange={(v) => setPerfil('intereses', v)} />
+            <TextArea
+              label="Estilo de aprendizaje"
+              value={form.estiloAprendizaje}
+              onChange={(v) => setPerfil('estiloAprendizaje', v)}
+            />
             <TextArea label="Fortalezas" value={form.fortalezas} onChange={(v) => setPerfil('fortalezas', v)} />
             <TextArea label="Áreas de mejora" value={form.areasMejora} onChange={(v) => setPerfil('areasMejora', v)} />
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Fecha de creación"
+                value={form.fechaCreacion}
+                onChange={(v) => setPerfil('fechaCreacion', v)}
+              />
+              <Field
+                label="Fecha de revisión"
+                value={form.fechaRevision}
+                onChange={(v) => setPerfil('fechaRevision', v)}
+              />
+            </div>
           </section>
 
           <section className="space-y-3">

@@ -14,7 +14,7 @@ const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_FILE_BYTES, files: 1 } });
 
 // Encabezados esperados (tolerante a mayúsculas y acentos):
-// nombre | grupo | nivel | diagnostico | intereses | fortalezas | areasMejora
+// nombre | grupo | nivel | diagnostico | intereses | fortalezas | areasMejora | estiloAprendizaje
 const HEADER_KEYS = {
   nombre: ['nombre', 'nombre completo', 'alumno'],
   grupo: ['grupo'],
@@ -23,6 +23,7 @@ const HEADER_KEYS = {
   intereses: ['intereses'],
   fortalezas: ['fortalezas'],
   areasMejora: ['areasmejora', 'areas de mejora', 'áreas de mejora'],
+  estiloAprendizaje: ['estilo', 'estilo de aprendizaje', 'estiloaprendizaje'],
 };
 
 // Busca la fila de encabezados en cualquier posición inicial (algunos
@@ -109,6 +110,7 @@ router.post(
         intereses: val(map.intereses),
         fortalezas: val(map.fortalezas),
         areasMejora: val(map.areasMejora),
+        estiloAprendizaje: val(map.estiloAprendizaje),
       };
 
       if (!nombre && !grupo && !nivelTxt && !Object.values(extra).some(Boolean)) continue; // fila vacía

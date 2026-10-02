@@ -33,7 +33,7 @@ Clasificador-de-Trayectorias/
 │   │   └── services/
 │   │       ├── classifier.js    # Algoritmo alumno -> proyecto (snapshot por competencia)
 │   │       ├── passwords.js     # Hash de contraseñas (scrypt)
-│   │       ├── pdfGenerator.js  # PDF con tabla de competencias (pdfkit)
+│   │       ├──    pdfGenerator.js  # PDF individual en formato oficial TIA (pdfkit)
 │   │       └── exporters.js     # Generadores CSV / XML / JSON / XLSX
 │   └── package.json
 │
@@ -148,8 +148,9 @@ Notas de la nube (plan Hobby):
      competencias que no existan, respeta los acentos y solo sobrescribe las
      celdas con texto. Al terminar muestra un resumen (filas, celdas, competencias
      creadas).
-2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel,
-   diagnostico, intereses, fortalezas, areasMejora` (máx. 4 MB). Tolera títulos
+2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel` y
+   opcionales `diagnostico, intereses, fortalezas, areasMejora,
+   estiloAprendizaje` (máx. 4 MB). Tolera títulos
    antes de los encabezados (p. ej. `GRUPO A1`), filas vacías y acentos o
    mayúsculas variadas (`Básico`, `basico`, `Intermeio`...); el nivel se toma
    por la inicial (**B**, **I**, **A**).
@@ -157,7 +158,8 @@ Notas de la nube (plan Hobby):
    editar el perfil y **cada competencia por separado** (sin afectar el catálogo).
    El botón "Restaurar del catálogo" vuelve a los valores maestros.
 4. **Documentos y exportación**
-   - PDF individual (tabla de competencias, A4 apaisado, con paginación).
+   - PDF individual en formato oficial TIA: Datos Generales, Perfil y tabla de
+     competencias con columna de Materia combinada (A4 apaisado, con paginación).
    - ZIP con un PDF por alumno de un grupo (filtro opcional de nivel).
    - Exportación masiva de los filtros actuales en **CSV, Excel (.xlsx), XML o JSON**.
 
@@ -188,10 +190,13 @@ Notas de la nube (plan Hobby):
   editar un alumno sin que cambie retroactivamente si luego se edita el catálogo.
   Al guardar el catálogo se sincronizan las competencias nuevas/eliminadas en los
   alumnos existentes sin pisar sus ediciones.
-- **PDF**: generado con `pdfkit` en A4 apaisado, con tabla de competencias
-  (Competencia · Descripción del alumno · Dominio · T1 · T2 · T3 · Meta),
-  celdas de altura dinámica, saltos de página con encabezado repetido y pie con
-  número de página.
+- **PDF**: generado con `pdfkit` en A4 apaisado, en el formato oficial
+  "Plan de Proyecto Educativo Individual" (TIA): secciones 1. Datos Generales
+  (nombre, grupo, edad, fechas de creación/revisión automáticas) y 2. Perfil
+  (intereses, estilo de aprendizaje, fortalezas, áreas de mejora), más la tabla
+  oficial de 7 columnas (Dominio disciplinar · Descripción diagnóstica · Materia
+  combinada · Trimestre 1-3 · Meta general), celdas de altura dinámica, saltos
+  de página con encabezado repetido y pie con número de página.
 - **Errores**: la API responde JSON con el estado adecuado (400/404/409/500),
   hay límite de tamaño en subidas (4 MB, límite de Vercel) y el frontend muestra
   banners de error en cada operación (los indicadores de carga nunca quedan

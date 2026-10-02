@@ -1,21 +1,34 @@
 const PDFDocument = require('pdfkit');
 
-const NIVEL_LABEL = { B: 'Básico', I: 'Intermedio', A: 'Avanzado' };
-
 const MARGIN = 40;
 const CELL_PAD = 4;
-const HEADER_ROW_H = 22;
 
-// Columnas de la tabla de competencias (total = 762 pt = A4 apaisado - márgenes)
+// Tabla oficial TIA: 7 columnas (total = 761.89 pt = A4 apaisado - márgenes)
 const COLUMNS = [
-  { key: 'competencia', label: 'Competencia', width: 90 },
-  { key: 'perfil', label: 'Descripción del alumno', width: 140 },
-  { key: 'dominio', label: 'Dominio', width: 65 },
-  { key: 't1', label: 'Trimestre 1', width: 112 },
-  { key: 't2', label: 'Trimestre 2', width: 112 },
-  { key: 't3', label: 'Trimestre 3', width: 112 },
-  { key: 'meta', label: 'Meta', width: 131 },
+  { label: 'Dominio disciplinar de aprendizaje', width: 85 },
+  { label: 'Descripción detallada de su evaluación diagnóstica', width: 165 },
+  { label: 'Materia', width: 70 },
+  { label: 'Primer Trimestre', width: 110 },
+  { label: 'Segundo Trimestre', width: 110 },
+  { label: 'Tercer Trimestre', width: 110 },
+  { label: 'Meta general', width: 111.89 },
 ];
+
+// Estilo por columna (como en la plantilla oficial):
+// col 0 azul con texto azul en negrita, col 2 (Materia) rosa con texto rojo,
+// el resto en azul muy claro.
+const COL_STYLES = [
+  { bg: '#e9eefb', color: '#1d3a8f', bold: true },
+  { bg: '#ffffff', color: '#111827', bold: false },
+  { bg: '#fdeaea', color: '#c81e1e', bold: true },
+  { bg: '#eef2fb', color: '#111827', bold: false },
+  { bg: '#eef2fb', color: '#111827', bold: false },
+  { bg: '#eef2fb', color: '#111827', bold: false },
+  { bg: '#eef2fb', color: '#111827', bold: false },
+];
+
+const BORDER = '#4b5563';
+const NAVY = '#1f3864';
 
 function colX(index) {
   let x = MARGIN;
@@ -23,10 +36,12 @@ function colX(index) {
   return x;
 }
 
+const dash = (v) => (v !== null && v !== undefined && String(v).trim() !== '' ? String(v) : '—');
+
 /**
- * Genera el PDF de un alumno y devuelve un Buffer.
- * Encabezado institucional + perfil + tabla de competencias
- * (Abstracción, Pensamiento lógico, ... Competencias digitales).
+ * Genera el PDF individual en el formato oficial "Plan de Proyecto Educativo
+ * Individual" (TIA): 1. Datos Generales, 2. Perfil del Estudiante y la tabla
+ * de competencias con columna de Materia combinada.
  */
 function generateStudentPDF(student, options = {}) {
   const competencias = options.competencias || [];
@@ -40,7 +55,7 @@ function generateStudentPDF(student, options = {}) {
         layout: 'landscape',
         margin: MARGIN,
         bufferPages: true,
-        info: { Title: `Plan de proyecto - ${student.nombre || ''}` },
+        info: { Title: `Plan de Proyecto Educativo Individual - ${student.nombre || ''}` },
       });
       const chunks = [];
       doc.on('data', (chunk) => chunks.push(chunk));
@@ -52,9 +67,22 @@ function generateStudentPDF(student, options = {}) {
       const pageBottom = () => doc.page.height - MARGIN - 18;
       const pageWidth = doc.page.width - MARGIN * 2;
 
-      const headerRow = (label, value) => {
-        doc.font('Helvetica-Bold').text(`${label}: `, { continued: true });
-        doc.font('Helvetica').text(value || '—');
+      const kv = (label, value) => {
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#111827').text(`${label}: `, { continued: true });
+        doc.font('Helvetica').text(dash(value));
+      };
+
+      const bar = (title) => {
+        if (doc.y + 26 > pageBottom()) doc.addPage();
+        const y = doc.y;
+        doc.rect(MARGIN, y, pageWidth, 17).fill(NAVY);
+        doc
+          .fillColor('#ffffff')
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .text(title, MARGIN + 8, y + 4, { width: pageWidth - 16, lineBreak: false });
+        doc.fillColor('#111827');
+        doc.y = y + 17 + 7;
       };
 
       // --- Encabezado institucional ---
@@ -71,36 +99,31 @@ function generateStudentPDF(student, options = {}) {
       doc.moveTo(MARGIN, doc.y).lineTo(doc.page.width - MARGIN, doc.y).strokeColor('#d1d5db').stroke();
       doc.moveDown(0.5);
 
-      // --- Datos generales ---
+      // --- 1. Datos Generales del Estudiante ---
+      bar('1. Datos Generales del Estudiante');
       const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
-      const grupoTxt = [
-        student.grupo,
-        grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '',
-        student.edad !== null && student.edad !== undefined ? `(aprox. ${student.edad} años)` : '',
-      ]
+      const grupoTxt = [student.grupo, grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '']
         .filter(Boolean)
         .join(' ');
+      const edad = student.edad !== null && student.edad !== undefined ? student.edad : grupoCfg && grupoCfg.edad;
 
-      doc.fontSize(10).fillColor('#111827');
-      headerRow('Nombre completo', student.nombre);
-      headerRow('Grupo', grupoTxt);
-      headerRow('Nivel', NIVEL_LABEL[student.nivel] || student.nivel);
-      headerRow('Materia', p.materia);
-      headerRow('Dominio disciplinar', p.dominioDisciplinar);
-      doc.moveDown(0.3);
+      kv('Nombre Completo', student.nombre);
+      kv('Grupo', grupoTxt);
+      kv('Edad', edad);
+      kv('Fecha de Creación', student.fechaCreacion);
+      kv('Fecha de Revisión', student.fechaRevision);
+      doc.y += 8;
 
-      // --- Perfil del alumno ---
-      doc.font('Helvetica-Bold').fontSize(11).text('Perfil del alumno');
-      doc.moveDown(0.2);
-      doc.font('Helvetica').fontSize(10);
-      headerRow('Diagnóstico', student.diagnostico);
-      headerRow('Intereses', student.intereses);
-      headerRow('Fortalezas', student.fortalezas);
-      headerRow('Áreas de mejora', student.areasMejora);
-      doc.moveDown(0.6);
+      // --- 2. Perfil del Estudiante ---
+      bar('2. Perfil del Estudiante');
+      kv('Intereses y Motivaciones', student.intereses);
+      kv('Estilo de Aprendizaje Predominante', student.estiloAprendizaje);
+      kv('Fortalezas Identificadas', student.fortalezas);
+      kv('Áreas de Mejora', student.areasMejora);
+      doc.y += 12;
 
-      // --- Tabla de competencias ---
-      const filas = competencias.map((c) => {
+      // --- Tabla de competencias (con columna Materia combinada) ---
+      let filas = competencias.map((c) => {
         const data = contenido[c.id] || {};
         return {
           nombre: c.nombre,
@@ -111,63 +134,62 @@ function generateStudentPDF(student, options = {}) {
           meta: data.metaGeneral || '',
         };
       });
+      if (filas.length === 0) filas = [{ nombre: '', perfil: '', t1: '', t2: '', t3: '', meta: '' }];
+
+      doc.font('Helvetica-Bold').fontSize(7.5);
+      const headerH = Math.max(
+        22,
+        ...COLUMNS.map((c) => doc.heightOfString(c.label, { width: c.width - CELL_PAD * 2, align: 'center' }) + CELL_PAD * 2)
+      );
 
       const heights = filas.map((f) => {
-        const valores = [f.nombre, f.perfil, f.t1, f.t2, f.t3, f.meta];
-        const dominio = p.dominioDisciplinar || '—';
-        let max = 0;
-        valores.forEach((text, i) => {
-          const colIndex = i === 0 ? 0 : i + 1; // el dominio es la columna 2
-          const w = COLUMNS[colIndex].width - CELL_PAD * 2;
-          const h = doc.heightOfString(text || '—', { width: w }) + CELL_PAD * 2;
+        const valores = [f.nombre, f.perfil, p.materia, f.t1, f.t2, f.t3, f.meta];
+        let max = 18;
+        valores.forEach((v, i) => {
+          doc.font(COL_STYLES[i].bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8);
+          const h = doc.heightOfString(dash(v), { width: COLUMNS[i].width - CELL_PAD * 2 }) + CELL_PAD * 2;
           if (h > max) max = h;
         });
-        const hDom = doc.heightOfString(dominio, { width: COLUMNS[2].width - CELL_PAD * 2 }) + CELL_PAD * 2;
-        if (hDom > max) max = hDom;
-        return Math.max(max, 18);
+        return max;
       });
 
       const drawRowHeader = (y) => {
         COLUMNS.forEach((col, i) => {
-          doc.rect(colX(i), y, col.width, HEADER_ROW_H).fill('#111827');
+          doc.rect(colX(i), y, col.width, headerH).fill(NAVY);
+          const th = doc.heightOfString(col.label, { width: col.width - CELL_PAD * 2, align: 'center' });
           doc
             .fillColor('#ffffff')
             .font('Helvetica-Bold')
-            .fontSize(8)
-            .text(col.label, colX(i) + CELL_PAD, y + HEADER_ROW_H / 2 - 5, {
+            .fontSize(7.5)
+            .text(col.label, colX(i) + CELL_PAD, y + (headerH - th) / 2, {
               width: col.width - CELL_PAD * 2,
               align: 'center',
             });
         });
         doc.fillColor('#111827');
-        return y + HEADER_ROW_H;
+        return y + headerH;
       };
 
-      const drawDomainSpan = (fromY, toY) => {
+      const drawMateriaSpan = (fromY, toY) => {
         if (toY <= fromY) return;
         const x = colX(2);
         const w = COLUMNS[2].width;
-        doc.rect(x, fromY, w, toY - fromY).fillAndStroke('#dcfce7', '#9ca3af');
-        const text = p.dominioDisciplinar || '—';
+        doc.rect(x, fromY, w, toY - fromY).fillAndStroke('#fdeaea', BORDER);
+        const text = dash(p.materia);
         const tw = w - CELL_PAD * 2;
         const th = doc.heightOfString(text, { width: tw, align: 'center' });
         doc
-          .fillColor('#166534')
+          .fillColor('#c81e1e')
           .font('Helvetica-Bold')
           .fontSize(9)
-          .text(text, x + CELL_PAD, fromY + (toY - fromY - th) / 2, {
-            width: tw,
-            align: 'center',
-          });
+          .text(text, x + CELL_PAD, fromY + (toY - fromY - th) / 2, { width: tw, align: 'center' });
         doc.fillColor('#111827');
       };
 
-      if (doc.y + HEADER_ROW_H + 40 > pageBottom()) doc.addPage();
-      doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827').text('Plan por competencias');
-      doc.moveDown(0.3);
+      if (doc.y + headerH + 40 > pageBottom()) doc.addPage();
 
       // Una fila nunca debe superar el alto útil de una página.
-      const maxRowH = doc.page.height - MARGIN * 2 - HEADER_ROW_H - 18;
+      const maxRowH = doc.page.height - MARGIN * 2 - headerH - 18;
 
       let y = drawRowHeader(doc.y);
       let spanStart = y;
@@ -175,25 +197,24 @@ function generateStudentPDF(student, options = {}) {
       filas.forEach((fila, idx) => {
         const rowH = Math.min(heights[idx], maxRowH);
         if (y + rowH > pageBottom()) {
-          drawDomainSpan(spanStart, y);
+          drawMateriaSpan(spanStart, y);
           doc.addPage();
           y = drawRowHeader(MARGIN);
           spanStart = y;
         }
 
-        const cellBg = idx % 2 === 0 ? '#f9fafb' : '#ffffff';
         const valores = [fila.nombre, fila.perfil, null, fila.t1, fila.t2, fila.t3, fila.meta];
-
         valores.forEach((value, i) => {
-          if (i === 2) return; // la celda de dominio se dibuja mergeada
+          if (i === 2) return; // la celda de Materia se dibuja combinada
           const col = COLUMNS[i];
+          const style = COL_STYLES[i];
           const x = colX(i);
-          doc.rect(x, y, col.width, rowH).fillAndStroke(cellBg, '#d1d5db');
+          doc.rect(x, y, col.width, rowH).fillAndStroke(style.bg, BORDER);
           doc
-            .fillColor('#111827')
-            .font(i === 0 ? 'Helvetica-Bold' : 'Helvetica')
-            .fontSize(8.5)
-            .text(value || '—', x + CELL_PAD, y + CELL_PAD, {
+            .fillColor(style.color)
+            .font(style.bold ? 'Helvetica-Bold' : 'Helvetica')
+            .fontSize(8)
+            .text(dash(value), x + CELL_PAD, y + CELL_PAD, {
               width: col.width - CELL_PAD * 2,
               align: 'left',
             });
@@ -202,24 +223,11 @@ function generateStudentPDF(student, options = {}) {
         y += rowH;
       });
 
-      drawDomainSpan(spanStart, y);
+      drawMateriaSpan(spanStart, y);
+      doc.fillColor('#111827');
       doc.y = y + 14;
 
-      // --- Meta general del proyecto ---
-      if (p.metaGeneral) {
-        if (doc.y + 40 > pageBottom()) doc.addPage();
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827').text('Meta general del proyecto');
-        doc.moveDown(0.2);
-        doc
-          .font('Helvetica')
-          .fontSize(10)
-          .fillColor('#374151')
-          .text(p.metaGeneral, { width: pageWidth });
-        doc.y += 6;
-      }
-
       // --- Pie de página (número de página + fecha) ---
-      // Ojo: si el texto cae por debajo del margen, pdfkit crea una página nueva.
       const range = doc.bufferedPageRange();
       const fecha = new Date().toLocaleDateString('es-MX');
       for (let i = range.start; i < range.start + range.count; i += 1) {

@@ -50,7 +50,8 @@ export default function UploadPage() {
           <code className="bg-gray-100 px-1 rounded">diagnostico</code>,{' '}
           <code className="bg-gray-100 px-1 rounded">intereses</code>,{' '}
           <code className="bg-gray-100 px-1 rounded">fortalezas</code>,{' '}
-          <code className="bg-gray-100 px-1 rounded">areasMejora</code>. Cada alumno se clasificará
+          <code className="bg-gray-100 px-1 rounded">areasMejora</code>,{' '}
+          <code className="bg-gray-100 px-1 rounded">estiloAprendizaje</code>. Cada alumno se clasificará
           automáticamente con el proyecto de su Grupo y Nivel.
         </p>
         {grupos.length > 0 && (
