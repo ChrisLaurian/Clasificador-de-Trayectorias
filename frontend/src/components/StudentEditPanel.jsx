@@ -15,7 +15,9 @@ export default function StudentEditPanel({ student, competencias: catalogoCompet
 
   useEffect(() => setForm(student), [student]);
 
-  if (!student) return null;
+  // El panel siempre está montado (student=null al inicio): al abrirlo, form
+  // todavía es null durante el primer render porque se sincroniza en el effect.
+  if (!student || !form) return null;
 
   const setPerfil = (field, value) => setForm((f) => ({ ...f, [field]: value }));
   const setProyecto = (field, value) =>
