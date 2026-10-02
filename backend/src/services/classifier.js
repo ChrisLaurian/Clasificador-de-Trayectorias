@@ -11,10 +11,6 @@ function applyTemplate(text, student) {
     .replace(/\{\{edad\}\}/gi, student.edad !== null && student.edad !== undefined ? String(student.edad) : '');
 }
 
-function emptyCompetencia() {
-  return { perfil: '', trimestre1: '', trimestre2: '', trimestre3: '', metaGeneral: '' };
-}
-
 function buildCompetenciasSnapshot(match, student, competencias) {
   const contenido = (match && match.contenido) || {};
   const snapshot = {};
@@ -68,12 +64,15 @@ function classifyStudent(student, catalog) {
   };
 }
 
+const CAMPOS_COMPETENCIA = ['perfil', 'trimestre1', 'trimestre2', 'trimestre3', 'metaGeneral'];
+
 /**
  * Sincroniza el snapshot de un alumno con la lista actual de competencias
  * del catálogo cuando ésta cambia:
- *  - conserva las ediciones individuales del alumno,
- *  - siembra las competencias nuevas desde el catálogo,
- *  - elimina las que ya no existen.
+ *  - conserva las ediciones individuales del alumno (campo con contenido),
+ *  - rellena desde el catálogo los campos vacíos (p. ej. alumnos cargados
+ *    antes de importar las trayectorias),
+ *  - elimina las competencias que ya no existen.
  */
 function syncStudentCompetencias(student, competencias, projects) {
   const snap = student.proyectoAsignado || {};
@@ -84,18 +83,15 @@ function syncStudentCompetencias(student, competencias, projects) {
 
   const next = {};
   competencias.forEach((c) => {
-    if (existing[c.id]) {
-      next[c.id] = { ...emptyCompetencia(), ...existing[c.id] };
-    } else {
-      const src = (match && match.contenido && match.contenido[c.id]) || {};
-      next[c.id] = {
-        perfil: applyTemplate(src.perfil, student),
-        trimestre1: applyTemplate(src.trimestre1, student),
-        trimestre2: applyTemplate(src.trimestre2, student),
-        trimestre3: applyTemplate(src.trimestre3, student),
-        metaGeneral: applyTemplate(src.metaGeneral, student),
-      };
-    }
+    const previo = existing[c.id] || {};
+    const src = (match && match.contenido && match.contenido[c.id]) || {};
+    const merged = {};
+    CAMPOS_COMPETENCIA.forEach((campo) => {
+      merged[campo] = String(previo[campo] ?? '').trim()
+        ? previo[campo]
+        : applyTemplate(src[campo], student);
+    });
+    next[c.id] = { ...previo, ...merged };
   });
 
   return { ...student, proyectoAsignado: { ...snap, competencias: next } };
