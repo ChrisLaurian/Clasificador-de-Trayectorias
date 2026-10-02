@@ -1,6 +1,14 @@
 // api/index.js — entrada serverless de Vercel.
 // Vercel reescribe /api/* a /api/index?path=..., así que aquí recuperamos la
 // ruta original antes de pasar la petición a Express (igual que en local).
+
+// En Vercel el login queda ACTIVADO por defecto: para volver al modo invitado
+// define AUTH_DISABLED=1 en el entorno del proyecto. En local no se toca nada
+// (seguimos en modo invitado mientras se desarrolla).
+if (process.env.VERCEL && process.env.AUTH_DISABLED === undefined) {
+  process.env.AUTH_DISABLED = '0';
+}
+
 const app = require('../backend/src/app');
 
 const DEST = '/api/index';

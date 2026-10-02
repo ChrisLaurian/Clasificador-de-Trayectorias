@@ -255,8 +255,31 @@ async function createUser(user) {
   return nuevo;
 }
 
-// Copia las semillas empaquetadas a los archivos/claves del usuario nuevo.
+// Identidad del usuario invitado: debe coincidir con FALLBACK_USER en
+// middleware/auth.js ('anon'). Sus datos son los cargados en modo invitado.
+const ANON_USER_ID = 'anon';
+
+// Copia los datos al usuario nuevo: el primero hereda los datos del invitado
+// (si existen) para que lo cargado en modo invitado no se pierda; si no, se
+// copian las semillas empaquetadas.
 async function seedUserData(user) {
+  if (user.esPrimero) {
+    const alumnosAnon = await readUserStudents(ANON_USER_ID);
+    const catalogoAnon = await readUserCatalog(ANON_USER_ID);
+    const hayAnon =
+      (alumnosAnon !== null && alumnosAnon !== undefined) ||
+      (catalogoAnon !== null && catalogoAnon !== undefined);
+    if (hayAnon) {
+      if (alumnosAnon !== null && alumnosAnon !== undefined) {
+        await writeUserStudents(user.id, alumnosAnon);
+      }
+      if (catalogoAnon !== null && catalogoAnon !== undefined) {
+        await writeUserCatalog(user.id, catalogoAnon);
+      }
+      return;
+    }
+  }
+
   const bruto = readJSONFile(SEED_PROJECTS_FILE);
   const { catalog } = normalizeCatalog(bruto || buildDefaultCatalog());
   await writeUserCatalog(user.id, catalog);
