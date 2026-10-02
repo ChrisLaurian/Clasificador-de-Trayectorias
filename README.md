@@ -192,11 +192,13 @@ Notas de la nube (plan Hobby):
   alumnos existentes sin pisar sus ediciones.
 - **PDF**: generado con `pdfkit` en A4 apaisado, en el formato oficial
   "Plan de Proyecto Educativo Individual" (TIA): secciones 1. Datos Generales
-  (nombre, grupo, edad, fechas de creación/revisión automáticas) y 2. Perfil
-  (intereses, estilo de aprendizaje, fortalezas, áreas de mejora), más la tabla
-  oficial de 7 columnas (Dominio disciplinar · Descripción diagnóstica · Materia
-  combinada · Trimestre 1-3 · Meta general), celdas de altura dinámica, saltos
-  de página con encabezado repetido y pie con número de página.
+  (nombre y grupo) y 2. Perfil (intereses, tipo de aprendizaje, fortalezas,
+  áreas de mejora), más la tabla oficial de 7 columnas (Dominio disciplinar ·
+  Descripción diagnóstica · Materia combinada —fija en **CODE** mientras todas
+  las trayectorias sean de esa materia— · Trimestre 1-3 · Meta general), celdas
+  de altura dinámica, saltos de página con encabezado repetido y pie con número
+  de página. El tipo de aprendizaje se elige con un selector (VARK: Visual,
+  Auditivo, Lectura/Escritura, Kinestésico) en el panel de cada alumno.
 - **Errores**: la API responde JSON con el estado adecuado (400/404/409/500),
   hay límite de tamaño en subidas (4 MB, límite de Vercel) y el frontend muestra
   banners de error en cada operación (los indicadores de carga nunca quedan

@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const { LEVELS, LEVEL_LABEL } = require('../constants');
 const { kvAvailable, kvGet, kvSet, kvDel } = require('./kvClient');
-const { syncStudentCompetencias, fechasOficiales } = require('../services/classifier');
+const { syncStudentCompetencias } = require('../services/classifier');
 
 const DATA_DIR = process.env.DATA_DIR || __dirname;
 const SEED_STUDENTS_FILE = path.join(DATA_DIR, 'students.json');
@@ -340,16 +340,9 @@ async function loadStudents(uid) {
   if (raw === null || raw === undefined) {
     // Sin datos propios aún (p. ej. modo invitado): muestra la semilla.
     const semilla = readJSONFile(SEED_STUDENTS_FILE);
-    return Array.isArray(semilla) ? semilla.map((s) => ({ ...s, ...fechasOficiales(s) })) : [];
+    return Array.isArray(semilla) ? semilla : [];
   }
-  const arr = Array.isArray(raw) ? raw : [];
-  // Backfill de los campos del formato oficial TIA (fechas/estilo): se aplica
-  // una sola vez en la primera lectura y solo se escribe si algo cambió.
-  const normalizados = arr.map((s) => ({ ...s, ...fechasOficiales(s) }));
-  if (JSON.stringify(normalizados) !== JSON.stringify(arr)) {
-    await writeUserStudents(uid, normalizados);
-  }
-  return normalizados;
+  return Array.isArray(raw) ? raw : [];
 }
 
 module.exports = {

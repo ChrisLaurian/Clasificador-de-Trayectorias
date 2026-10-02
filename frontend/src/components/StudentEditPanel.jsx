@@ -3,6 +3,9 @@ import { X, Save, RefreshCcw, FileDown, Loader2, AlertTriangle } from 'lucide-re
 import { updateStudent, reclassifyStudent, downloadStudentPDF, errMsg } from '../api/client';
 import { LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
 
+// Tipos de aprendizaje (VARK) para el selector de cada alumno.
+const TIPOS_APRENDIZAJE = ['Visual', 'Auditivo', 'Lectura/Escritura', 'Kinestésico'];
+
 export default function StudentEditPanel({ student, competencias: catalogoCompetencias = [], onClose, onUpdated }) {
   const [form, setForm] = useState(student);
   const [saving, setSaving] = useState(false);
@@ -127,25 +130,14 @@ export default function StudentEditPanel({ student, competencias: catalogoCompet
             <h3 className="text-sm font-semibold text-gray-700">Perfil del alumno</h3>
             <TextArea label="Diagnóstico" value={form.diagnostico} onChange={(v) => setPerfil('diagnostico', v)} />
             <TextArea label="Intereses" value={form.intereses} onChange={(v) => setPerfil('intereses', v)} />
-            <TextArea
-              label="Estilo de aprendizaje"
-              value={form.estiloAprendizaje}
+            <Select
+              label="Tipo de aprendizaje"
+              value={form.estiloAprendizaje || ''}
               onChange={(v) => setPerfil('estiloAprendizaje', v)}
+              options={TIPOS_APRENDIZAJE}
             />
             <TextArea label="Fortalezas" value={form.fortalezas} onChange={(v) => setPerfil('fortalezas', v)} />
             <TextArea label="Áreas de mejora" value={form.areasMejora} onChange={(v) => setPerfil('areasMejora', v)} />
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                label="Fecha de creación"
-                value={form.fechaCreacion}
-                onChange={(v) => setPerfil('fechaCreacion', v)}
-              />
-              <Field
-                label="Fecha de revisión"
-                value={form.fechaRevision}
-                onChange={(v) => setPerfil('fechaRevision', v)}
-              />
-            </div>
           </section>
 
           <section className="space-y-3">
@@ -264,6 +256,27 @@ function Field({ label, value, onChange }) {
         onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
       />
+    </label>
+  );
+}
+
+function Select({ label, value, onChange, options }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-gray-500">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+      >
+        <option value="">Sin seleccionar</option>
+        {value && !options.includes(value) && <option value={value}>{value}</option>}
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

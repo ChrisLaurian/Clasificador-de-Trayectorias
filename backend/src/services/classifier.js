@@ -53,7 +53,6 @@ function classifyStudent(student, catalog) {
   return {
     ...student,
     edad,
-    ...fechasOficiales(student),
     proyectoAsignado: {
       ...(student.proyectoAsignado || {}), // conserva campos legacy de versiones anteriores
       materia: src.materia || '',
@@ -66,18 +65,6 @@ function classifyStudent(student, catalog) {
 }
 
 const CAMPOS_COMPETENCIA = ['perfil', 'trimestre1', 'trimestre2', 'trimestre3', 'metaGeneral'];
-
-const hoy = () => new Date().toLocaleDateString('es-MX');
-
-// Campos del formato oficial TIA: se rellenan automáticamente la primera vez
-// (undefined = el alumno nunca los tuvo; '' = el docente los borró a propósito).
-function fechasOficiales(student) {
-  return {
-    fechaCreacion: student.fechaCreacion !== undefined ? student.fechaCreacion : hoy(),
-    fechaRevision: student.fechaRevision !== undefined ? student.fechaRevision : hoy(),
-    estiloAprendizaje: student.estiloAprendizaje !== undefined ? student.estiloAprendizaje : '',
-  };
-}
 
 /**
  * Sincroniza el snapshot de un alumno con la lista actual de competencias
@@ -107,7 +94,7 @@ function syncStudentCompetencias(student, competencias, projects) {
     next[c.id] = { ...previo, ...merged };
   });
 
-  return { ...student, ...fechasOficiales(student), proyectoAsignado: { ...snap, competencias: next } };
+  return { ...student, proyectoAsignado: { ...snap, competencias: next } };
 }
 
-module.exports = { classifyStudent, syncStudentCompetencias, applyTemplate, fechasOficiales };
+module.exports = { classifyStudent, syncStudentCompetencias, applyTemplate };

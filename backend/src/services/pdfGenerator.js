@@ -30,6 +30,10 @@ const COL_STYLES = [
 const BORDER = '#4b5563';
 const NAVY = '#1f3864';
 
+// Por ahora todas las trayectorias del programa son de la materia CODE:
+// se muestra fija en la tabla aunque la celda del catálogo no tenga materia.
+const MATERIA = 'CODE';
+
 function colX(index) {
   let x = MARGIN;
   for (let i = 0; i < index; i += 1) x += COLUMNS[i].width;
@@ -105,13 +109,9 @@ function generateStudentPDF(student, options = {}) {
       const grupoTxt = [student.grupo, grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '']
         .filter(Boolean)
         .join(' ');
-      const edad = student.edad !== null && student.edad !== undefined ? student.edad : grupoCfg && grupoCfg.edad;
 
       kv('Nombre Completo', student.nombre);
       kv('Grupo', grupoTxt);
-      kv('Edad', edad);
-      kv('Fecha de Creación', student.fechaCreacion);
-      kv('Fecha de Revisión', student.fechaRevision);
       doc.y += 8;
 
       // --- 2. Perfil del Estudiante ---
@@ -143,7 +143,7 @@ function generateStudentPDF(student, options = {}) {
       );
 
       const heights = filas.map((f) => {
-        const valores = [f.nombre, f.perfil, p.materia, f.t1, f.t2, f.t3, f.meta];
+        const valores = [f.nombre, f.perfil, MATERIA, f.t1, f.t2, f.t3, f.meta];
         let max = 18;
         valores.forEach((v, i) => {
           doc.font(COL_STYLES[i].bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8);
@@ -175,7 +175,7 @@ function generateStudentPDF(student, options = {}) {
         const x = colX(2);
         const w = COLUMNS[2].width;
         doc.rect(x, fromY, w, toY - fromY).fillAndStroke('#fdeaea', BORDER);
-        const text = dash(p.materia);
+        const text = MATERIA;
         const tw = w - CELL_PAD * 2;
         const th = doc.heightOfString(text, { width: tw, align: 'center' });
         doc
