@@ -173,6 +173,9 @@ Notas de la nube (plan Hobby):
      (título y secciones en azul navy, tabla coloreada con bordes, materia
      combinada en vertical, sin fechas ni edad), descargable por alumno desde
      la columna Acciones junto al PDF.
+   - **Ver sin descargar**: en la columna Acciones, "Ver PDF" abre el PDF en
+     una pestaña nueva (`?view=inline`) y "Ver Excel" abre una vista HTML con
+     el mismo contenido y estilo del .xlsx.
    - ZIP con un PDF por alumno de un grupo (filtro opcional de nivel).
    - Exportación masiva de los filtros actuales en **CSV, Excel (.xlsx), XML o JSON**.
 
@@ -185,7 +188,9 @@ Notas de la nube (plan Hobby):
 | POST | `/api/projects/import` | Importa trayectorias desde CSV/Excel (multipart `file` + `grupos`, detecta columnas) |
 | GET / POST / PUT / DELETE | `/api/students...` | CRUD de alumnos y `/:id/reclasificar` (del usuario) |
 | POST | `/api/upload` | Carga masiva Excel/CSV |
-| GET | `/api/documents/student/:id` | PDF individual |
+| GET | `/api/documents/student/:id` | PDF individual (`?view=inline` para verlo en el navegador) |
+| GET | `/api/documents/student/:id/xlsx` | Excel individual (descarga) |
+| GET | `/api/documents/student/:id/html` | Vista HTML del documento (ver sin descargar) |
 | GET | `/api/documents/group/:grupo?nivel=` | ZIP por grupo |
 | GET | `/api/export?format=csv\|xlsx\|xml\|json&grupo=&nivel=&nombre=` | Exportación masiva |
 

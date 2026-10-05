@@ -307,4 +307,115 @@ function generateStudentXLSX(student, options = {}) {
   return wb.xlsx.writeBuffer().then((buffer) => Buffer.from(buffer));
 }
 
-module.exports = { buildRows, toCSV, toXML, toXLSX, toJSON, generateStudentXLSX };
+// --- Vista en navegador (HTML) del mismo documento TIA ------------------------
+function escapeHtml(valor) {
+  return String(valor === null || valor === undefined ? '' : valor)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function generateStudentHTML(student, options = {}) {
+  const competencias = options.competencias || [];
+  const grupos = options.grupos || [];
+  const p = student.proyectoAsignado || {};
+  const contenido = p.competencias || {};
+  const materia =
+    p.materia !== null && p.materia !== undefined && String(p.materia).trim() !== ''
+      ? String(p.materia).trim()
+      : 'CODE';
+  const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
+  const grupoTxt = [student.grupo, grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '']
+    .filter(Boolean)
+    .join(' ');
+  const e = escapeHtml;
+  const kv = (k, v) =>
+    `<div class="kv"><div class="k">${e(k)}</div><div class="v">${e(v)}</div></div>`;
+
+  const filas = competencias.length ? competencias : [{ id: '', nombre: '' }];
+  const filasHtml = filas
+    .map((c, i) => {
+      const d = contenido[c.id] || {};
+      const materiaCelda =
+        i === 0
+          ? `<td class="materia" rowspan="${filas.length}">${e(materia)}</td>`
+          : '';
+      return (
+        '<tr>' +
+        `<td class="dom">${e(c.nombre)}</td>` +
+        `<td>${e(d.perfil)}</td>` +
+        materiaCelda +
+        `<td>${e(d.trimestre1)}</td>` +
+        `<td>${e(d.trimestre2)}</td>` +
+        `<td>${e(d.trimestre3)}</td>` +
+        `<td class="meta">${e(d.metaGeneral)}</td>` +
+        '</tr>'
+      );
+    })
+    .join('\n        ');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${e(student.nombre)} — Plan de Proyecto Educativo Individual (TIA)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 24px; background: #f3f4f6; color: #111827; }
+  .doc { max-width: 1180px; margin: 0 auto; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; padding: 24px 28px 28px; }
+  .titulo { text-align: center; font-size: 17px; font-weight: 700; color: #1f3864; background: #e9eefb; margin: 0 0 14px; padding: 12px; border-radius: 4px; }
+  .seccion { background: #1f3864; color: #fff; font-weight: 700; font-size: 14px; padding: 7px 12px; border-radius: 4px; margin: 16px 0 8px; }
+  .kv { display: flex; border: 1px solid #d1d5db; margin-top: -1px; }
+  .kv .k { flex: 0 0 250px; background: #f3f4f6; font-weight: 700; font-size: 13px; padding: 8px 10px; border-right: 1px solid #d1d5db; display: flex; align-items: center; }
+  .kv .v { flex: 1; font-size: 13px; padding: 8px 10px; white-space: pre-wrap; }
+  table.tia { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 8px; }
+  table.tia th { background: #1f3864; color: #fff; font-size: 12.5px; font-weight: 700; padding: 8px 6px; border: 1px solid #9ca3af; text-align: center; }
+  table.tia td { border: 1px solid #d1d5db; padding: 8px 6px; font-size: 13px; vertical-align: top; background: #eef2fb; white-space: pre-wrap; word-break: break-word; }
+  table.tia td.dom { background: #e9eefb; color: #1d3a8f; font-weight: 700; vertical-align: middle; }
+  table.tia td.materia { background: #fdeaea; color: #c81e1e; font-weight: 700; text-align: center; vertical-align: middle; }
+  @media print { body { background: #fff; padding: 0; } .doc { border: 0; border-radius: 0; padding: 0; } }
+</style>
+</head>
+<body>
+  <div class="doc">
+    <h1 class="titulo">Plan de Proyecto Educativo Individual (TIA)</h1>
+
+    <div class="seccion">1. Datos Generales del Estudiante</div>
+    ${kv('Nombre Completo', student.nombre)}
+    ${kv('Grupo', grupoTxt)}
+
+    <div class="seccion">2. Perfil del Estudiante</div>
+    ${kv('Intereses y Motivaciones', student.intereses)}
+    ${kv('Estilo de Aprendizaje Predominante', student.estiloAprendizaje)}
+    ${kv('Fortalezas Identificadas', student.fortalezas)}
+    ${kv('Áreas de Mejora', student.areasMejora)}
+
+    <table class="tia">
+      <colgroup>
+        <col style="width:17%"><col style="width:25%"><col style="width:8%">
+        <col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:11%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Dominio disciplinar de aprendizaje</th>
+          <th>Descripción detallada de su evaluación diagnóstica</th>
+          <th>Materia</th>
+          <th>Primer Trimestre</th>
+          <th>Segundo Trimestre</th>
+          <th>Tercer Trimestre</th>
+          <th>Meta general</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filasHtml}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>`;
+}
+
+module.exports = { buildRows, toCSV, toXML, toXLSX, toJSON, generateStudentXLSX, generateStudentHTML };

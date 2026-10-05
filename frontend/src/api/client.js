@@ -68,6 +68,15 @@ export const downloadStudentXLSX = async (id, nombre) => {
   triggerDownload(res.data, filenameFromResponse(res, `${nombre || 'alumno'}.xlsx`));
 };
 
+// Ver en pestaña nueva sin descargar (la sesión viaja por cookie)
+export const verStudentPDF = (id) => {
+  window.open(`/api/documents/student/${id}?view=inline`, '_blank');
+};
+
+export const verStudentXLSX = (id) => {
+  window.open(`/api/documents/student/${id}/html`, '_blank');
+};
+
 export const downloadGroupZIP = async (grupo, nivel) => {
   const res = await api.get(`/documents/group/${grupo}`, {
     params: nivel ? { nivel } : {},

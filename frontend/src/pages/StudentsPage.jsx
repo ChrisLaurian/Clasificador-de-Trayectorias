@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Users, FileDown, FolderDown, Loader2, Search, Download, ChevronDown,
-  FileSpreadsheet, FileJson, FileCode2, Table, AlertTriangle, X,
+  FileSpreadsheet, FileJson, FileCode2, Table, AlertTriangle, X, Eye,
 } from 'lucide-react';
 import {
   getStudents, getCatalog, downloadStudentPDF, downloadStudentXLSX, downloadGroupZIP,
-  downloadExport, errMsg,
+  downloadExport, verStudentPDF, verStudentXLSX, errMsg,
 } from '../api/client';
 import { LEVELS, LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
 import StudentEditPanel from '../components/StudentEditPanel.jsx';
@@ -277,13 +277,25 @@ export default function StudentsPage() {
                     {catalog.competencias.length}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-3 flex-wrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          verStudentPDF(s.id);
+                        }}
+                        title="Ver PDF en una pestaña nueva (sin descargar)"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+                      >
+                        <Eye size={13} />
+                        Ver PDF
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDownloadOne(s, 'pdf');
                         }}
                         disabled={bajandoAlumno(s.id)}
+                        title="Descargar PDF"
                         className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
                       >
                         {bajando(s.id, 'pdf') ? (
@@ -296,9 +308,21 @@ export default function StudentsPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          verStudentXLSX(s.id);
+                        }}
+                        title="Ver el Excel en una pestaña nueva (sin descargar)"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+                      >
+                        <Eye size={13} />
+                        Ver Excel
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleDownloadOne(s, 'xlsx');
                         }}
                         disabled={bajandoAlumno(s.id)}
+                        title="Descargar Excel (.xlsx)"
                         className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
                       >
                         {bajando(s.id, 'xlsx') ? (

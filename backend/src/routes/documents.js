@@ -4,7 +4,7 @@ const archiver = require('archiver');
 const db = require('../data/db');
 const asyncHandler = require('../asyncHandler');
 const { generateStudentPDF } = require('../services/pdfGenerator');
-const { generateStudentXLSX } = require('../services/exporters');
+const { generateStudentXLSX, generateStudentHTML } = require('../services/exporters');
 
 function safeFileName(name) {
   return (name || 'alumno')
@@ -41,7 +41,23 @@ router.get(
   })
 );
 
-// GET /api/documents/student/:id -> PDF individual
+// GET /api/documents/student/:id/html -> vista en navegador (sin descargar)
+router.get(
+  '/student/:id/html',
+  asyncHandler(async (req, res) => {
+    const students = await db.getStudents(req.user.id);
+    const student = students.find((s) => s.id === req.params.id);
+    if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
+
+    const catalog = await db.getCatalog(req.user.id);
+    const html = generateStudentHTML(student, pdfOptions(catalog));
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  })
+);
+
+// GET /api/documents/student/:id -> PDF individual (?view=inline lo muestra en el navegador)
 router.get(
   '/student/:id',
   asyncHandler(async (req, res, next) => {
@@ -52,10 +68,11 @@ router.get(
     const catalog = await db.getCatalog(req.user.id);
     const pdfBuffer = await generateStudentPDF(student, pdfOptions(catalog));
 
+    const disposition = req.query.view === 'inline' ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${safeFileName(student.nombre)}_${student.grupo}${student.nivel}.pdf"`
+      `${disposition}; filename="${safeFileName(student.nombre)}_${student.grupo}${student.nivel}.pdf"`
     );
     res.send(pdfBuffer);
   })
