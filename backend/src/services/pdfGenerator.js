@@ -30,8 +30,8 @@ const COL_STYLES = [
 const BORDER = '#4b5563';
 const NAVY = '#1f3864';
 
-// Por ahora todas las trayectorias del programa son de la materia CODE:
-// se muestra fija en la tabla aunque la celda del catálogo no tenga materia.
+// Materia por defecto: si el alumno no trae texto de materia en su proyecto,
+// se muestra CODE como respaldo (si hay texto, se respeta el que ya exista).
 const MATERIA = 'CODE';
 
 function colX(index) {
@@ -68,6 +68,11 @@ function generateStudentPDF(student, options = {}) {
 
       const p = student.proyectoAsignado || {};
       const contenido = p.competencias || {};
+      // La materia del alumno; vacía -> CODE como respaldo.
+      const materiaTxt =
+        p.materia !== null && p.materia !== undefined && String(p.materia).trim() !== ''
+          ? String(p.materia).trim()
+          : MATERIA;
       const pageBottom = () => doc.page.height - MARGIN - 18;
       const pageWidth = doc.page.width - MARGIN * 2;
 
@@ -143,7 +148,7 @@ function generateStudentPDF(student, options = {}) {
       );
 
       const heights = filas.map((f) => {
-        const valores = [f.nombre, f.perfil, MATERIA, f.t1, f.t2, f.t3, f.meta];
+        const valores = [f.nombre, f.perfil, materiaTxt, f.t1, f.t2, f.t3, f.meta];
         let max = 18;
         valores.forEach((v, i) => {
           doc.font(COL_STYLES[i].bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8);
@@ -175,7 +180,7 @@ function generateStudentPDF(student, options = {}) {
         const x = colX(2);
         const w = COLUMNS[2].width;
         doc.rect(x, fromY, w, toY - fromY).fillAndStroke('#fdeaea', BORDER);
-        const text = MATERIA;
+        const text = materiaTxt;
         const tw = w - CELL_PAD * 2;
         const th = doc.heightOfString(text, { width: tw, align: 'center' });
         doc

@@ -51,8 +51,16 @@ export default function UploadPage() {
           <code className="bg-gray-100 px-1 rounded">intereses</code>,{' '}
           <code className="bg-gray-100 px-1 rounded">fortalezas</code>,{' '}
           <code className="bg-gray-100 px-1 rounded">areasMejora</code>,{' '}
-          <code className="bg-gray-100 px-1 rounded">estiloAprendizaje</code>. Cada alumno se clasificará
-          automáticamente con el proyecto de su Grupo y Nivel.
+          <code className="bg-gray-100 px-1 rounded">estiloAprendizaje</code> y opcional{' '}
+          <code className="bg-gray-100 px-1 rounded">materia</code>. Cada alumno se clasificará
+          automáticamente con el proyecto de su Grupo y Nivel. Si la materia ya trae texto se
+          conserva; si está vacía se añade <span className="font-medium">CODE</span>. Si un alumno
+          ya existe (mismo nombre), se actualiza en lugar de duplicarlo.
+        </p>
+        <p className="text-sm text-gray-500 mt-2">
+          Si el archivo <span className="font-medium">no trae columna nombre</span>, el nombre del
+          alumno se toma del <span className="font-medium">nombre del archivo</span> (un solo alumno
+          por archivo).
         </p>
         {grupos.length > 0 && (
           <p className="text-xs text-gray-400 mt-2">
@@ -105,6 +113,7 @@ export default function UploadPage() {
             <CheckCircle2 size={16} />
             <span>
               {result.insertados} alumno(s) cargados y clasificados correctamente.
+              {result.actualizados > 0 && ` ${result.actualizados} alumno(s) actualizado(s).`}
               {result.conErrores > 0 && ` ${result.conErrores} fila(s) con errores.`}
             </span>
           </div>

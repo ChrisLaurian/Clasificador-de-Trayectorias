@@ -152,16 +152,23 @@ Notas de la nube (plan Hobby):
      creadas).
 2. **Carga Masiva** — Sube un Excel/CSV con columnas `nombre, grupo, nivel` y
    opcionales `diagnostico, intereses, fortalezas, areasMejora,
-   estiloAprendizaje` (máx. 4 MB). Tolera títulos
+   estiloAprendizaje, materia` (máx. 4 MB). Tolera títulos
    antes de los encabezados (p. ej. `GRUPO A1`), filas vacías y acentos o
    mayúsculas variadas (`Básico`, `basico`, `Intermeio`...); el nivel se toma
-   por la inicial (**B**, **I**, **A**).
+   por la inicial (**B**, **I**, **A**). La **materia** respeta el texto que
+   ya traiga el alumno o el archivo y solo añade `CODE` como respaldo si no hay
+   texto. Si el alumno ya existe (mismo nombre) **se actualiza en lugar de
+   duplicarlo** (las filas vacías conservan lo que ya tenía). Si el archivo
+   **no trae columna `nombre`**, el nombre del alumno se toma del **nombre del
+   archivo** (un solo alumno por archivo).
 3. **Alumnos** — Filtra por grupo/nivel/búsqueda y abre el panel individual para
    editar el perfil y **cada competencia por separado** (sin afectar el catálogo).
    El botón "Restaurar del catálogo" vuelve a los valores maestros.
 4. **Documentos y exportación**
    - PDF individual en formato oficial TIA: Datos Generales, Perfil y tabla de
-     competencias con columna de Materia combinada (A4 apaisado, con paginación).
+     competencias con columna de Materia combinada (A4 apaisado, con
+     paginación). La Materia muestra el texto real del alumno; si está vacío,
+     `CODE`.
    - ZIP con un PDF por alumno de un grupo (filtro opcional de nivel).
    - Exportación masiva de los filtros actuales en **CSV, Excel (.xlsx), XML o JSON**.
 
