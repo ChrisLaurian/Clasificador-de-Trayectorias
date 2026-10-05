@@ -27,7 +27,7 @@ router.get(
     if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
 
     const catalog = await db.getCatalog(req.user.id);
-    const buffer = generateStudentXLSX(student, pdfOptions(catalog));
+    const buffer = await generateStudentXLSX(student, pdfOptions(catalog));
 
     res.setHeader(
       'Content-Type',

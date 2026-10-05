@@ -169,9 +169,10 @@ Notas de la nube (plan Hobby):
      competencias con columna de Materia combinada (A4 apaisado, con
      paginación). La Materia muestra el texto real del alumno; si está vacío,
      `CODE`.
-   - Excel individual (.xlsx) con el mismo contenido del PDF TIA (Datos
-     Generales, Perfil y tabla de 7 columnas), descargable por alumno desde la
-     columna Acciones junto al PDF.
+   - Excel individual (.xlsx) con el mismo contenido y estilo del PDF TIA
+     (título y secciones en azul navy, tabla coloreada con bordes, materia
+     combinada en vertical, sin fechas ni edad), descargable por alumno desde
+     la columna Acciones junto al PDF.
    - ZIP con un PDF por alumno de un grupo (filtro opcional de nivel).
    - Exportación masiva de los filtros actuales en **CSV, Excel (.xlsx), XML o JSON**.
 
