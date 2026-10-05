@@ -4,7 +4,8 @@ import {
   FileSpreadsheet, FileJson, FileCode2, Table, AlertTriangle, X,
 } from 'lucide-react';
 import {
-  getStudents, getCatalog, downloadStudentPDF, downloadGroupZIP, downloadExport, errMsg,
+  getStudents, getCatalog, downloadStudentPDF, downloadStudentXLSX, downloadGroupZIP,
+  downloadExport, errMsg,
 } from '../api/client';
 import { LEVELS, LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
 import StudentEditPanel from '../components/StudentEditPanel.jsx';
@@ -55,17 +56,28 @@ export default function StudentsPage() {
     ...(search ? { nombre: search } : {}),
   });
 
-  const handleDownloadOne = async (student) => {
-    setDownloadingId(student.id);
+  const handleDownloadOne = async (student, formato) => {
+    const key = `${student.id}|${formato}`;
+    setDownloadingId(key);
     setError('');
     try {
-      await downloadStudentPDF(student.id, student.nombre);
+      if (formato === 'xlsx') {
+        await downloadStudentXLSX(student.id, student.nombre);
+      } else {
+        await downloadStudentPDF(student.id, student.nombre);
+      }
     } catch (err) {
-      setError(errMsg(err, 'No se pudo generar el PDF'));
+      setError(
+        errMsg(err, formato === 'xlsx' ? 'No se pudo generar el Excel' : 'No se pudo generar el PDF')
+      );
     } finally {
       setDownloadingId(null);
     }
   };
+
+  const bajando = (studentId, formato) => downloadingId === `${studentId}|${formato}`;
+  const bajandoAlumno = (studentId) =>
+    Boolean(downloadingId) && downloadingId.startsWith(`${studentId}|`);
 
   const handleDownloadZip = async () => {
     if (!filterGrupo) return;
@@ -264,22 +276,39 @@ export default function StudentsPage() {
                     {Object.keys(s.proyectoAsignado?.competencias || {}).length}/
                     {catalog.competencias.length}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownloadOne(s);
-                      }}
-                      disabled={downloadingId === s.id}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
-                    >
-                      {downloadingId === s.id ? (
-                        <Loader2 className="animate-spin" size={13} />
-                      ) : (
-                        <FileDown size={13} />
-                      )}
-                      PDF
-                    </button>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadOne(s, 'pdf');
+                        }}
+                        disabled={bajandoAlumno(s.id)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+                      >
+                        {bajando(s.id, 'pdf') ? (
+                          <Loader2 className="animate-spin" size={13} />
+                        ) : (
+                          <FileDown size={13} />
+                        )}
+                        PDF
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadOne(s, 'xlsx');
+                        }}
+                        disabled={bajandoAlumno(s.id)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+                      >
+                        {bajando(s.id, 'xlsx') ? (
+                          <Loader2 className="animate-spin" size={13} />
+                        ) : (
+                          <FileSpreadsheet size={13} />
+                        )}
+                        Excel
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

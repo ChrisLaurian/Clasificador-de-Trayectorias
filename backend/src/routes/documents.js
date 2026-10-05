@@ -4,6 +4,7 @@ const archiver = require('archiver');
 const db = require('../data/db');
 const asyncHandler = require('../asyncHandler');
 const { generateStudentPDF } = require('../services/pdfGenerator');
+const { generateStudentXLSX } = require('../services/exporters');
 
 function safeFileName(name) {
   return (name || 'alumno')
@@ -16,6 +17,29 @@ function safeFileName(name) {
 function pdfOptions(catalog) {
   return { competencias: catalog.competencias, grupos: catalog.grupos };
 }
+
+// GET /api/documents/student/:id/xlsx -> Excel individual (formato TIA)
+router.get(
+  '/student/:id/xlsx',
+  asyncHandler(async (req, res) => {
+    const students = await db.getStudents(req.user.id);
+    const student = students.find((s) => s.id === req.params.id);
+    if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
+
+    const catalog = await db.getCatalog(req.user.id);
+    const buffer = generateStudentXLSX(student, pdfOptions(catalog));
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safeFileName(student.nombre)}_${student.grupo}${student.nivel}.xlsx"`
+    );
+    res.send(Buffer.from(buffer));
+  })
+);
 
 // GET /api/documents/student/:id -> PDF individual
 router.get(

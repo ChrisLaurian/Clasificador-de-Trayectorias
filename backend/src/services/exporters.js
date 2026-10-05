@@ -122,4 +122,77 @@ function toJSON(students) {
   return JSON.stringify(students, null, 2);
 }
 
-module.exports = { buildRows, toCSV, toXML, toXLSX, toJSON };
+// --- Documento individual en Excel (mismo contenido del PDF oficial TIA) ------
+const COLUMNAS_TIA = [
+  'Dominio disciplinar de aprendizaje',
+  'Descripción detallada de su evaluación diagnóstica',
+  'Materia',
+  'Primer Trimestre',
+  'Segundo Trimestre',
+  'Tercer Trimestre',
+  'Meta general',
+];
+
+function generateStudentXLSX(student, options = {}) {
+  const competencias = options.competencias || [];
+  const grupos = options.grupos || [];
+  const p = student.proyectoAsignado || {};
+  const contenido = p.competencias || {};
+  // La materia del alumno; vacía -> CODE como respaldo (igual que el PDF).
+  const materia =
+    p.materia !== null && p.materia !== undefined && String(p.materia).trim() !== ''
+      ? String(p.materia).trim()
+      : 'CODE';
+  const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
+  const grupoTxt = [student.grupo, grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '']
+    .filter(Boolean)
+    .join(' ');
+
+  const aoa = [
+    ['Plan de Proyecto Educativo Individual (TIA)'],
+    [],
+    ['1. Datos Generales del Estudiante'],
+    ['Nombre Completo', student.nombre || ''],
+    ['Grupo', grupoTxt],
+    [],
+    ['2. Perfil del Estudiante'],
+    ['Intereses y Motivaciones', student.intereses || ''],
+    ['Estilo de Aprendizaje Predominante', student.estiloAprendizaje || ''],
+    ['Fortalezas Identificadas', student.fortalezas || ''],
+    ['Áreas de Mejora', student.areasMejora || ''],
+    [],
+    COLUMNAS_TIA,
+  ];
+
+  const filas = competencias.length
+    ? competencias
+    : [{ id: '', nombre: '' }];
+  filas.forEach((c) => {
+    const d = contenido[c.id] || {};
+    aoa.push([
+      c.nombre || '',
+      d.perfil || '',
+      materia,
+      d.trimestre1 || '',
+      d.trimestre2 || '',
+      d.trimestre3 || '',
+      d.metaGeneral || '',
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [
+    { wch: 34 },
+    { wch: 55 },
+    { wch: 16 },
+    { wch: 42 },
+    { wch: 42 },
+    { wch: 42 },
+    { wch: 42 },
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'TIA');
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+}
+
+module.exports = { buildRows, toCSV, toXML, toXLSX, toJSON, generateStudentXLSX };

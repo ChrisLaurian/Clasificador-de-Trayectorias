@@ -63,6 +63,11 @@ export const downloadStudentPDF = async (id, nombre) => {
   triggerDownload(res.data, filenameFromResponse(res, `${nombre || 'alumno'}.pdf`));
 };
 
+export const downloadStudentXLSX = async (id, nombre) => {
+  const res = await api.get(`/documents/student/${id}/xlsx`, { responseType: 'blob' });
+  triggerDownload(res.data, filenameFromResponse(res, `${nombre || 'alumno'}.xlsx`));
+};
+
 export const downloadGroupZIP = async (grupo, nivel) => {
   const res = await api.get(`/documents/group/${grupo}`, {
     params: nivel ? { nivel } : {},
