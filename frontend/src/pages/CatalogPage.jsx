@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Save, LayoutGrid, Loader2, CheckCircle2, AlertTriangle, Plus, Trash2, Users, Sparkles, FileUp } from 'lucide-react';
+import { Save, LayoutGrid, Loader2, CheckCircle2, AlertTriangle, Plus, Trash2, Users, Sparkles, FileUp, FileText } from 'lucide-react';
 import { getCatalog, saveCatalog, importCatalog, errMsg } from '../api/client';
 import { LEVELS, LEVEL_LABEL, LEVEL_BADGE_COLOR } from '../constants';
 import Modal from '../components/Modal.jsx';
@@ -223,7 +223,6 @@ export default function CatalogPage() {
     }));
 
   const removeCompetencia = (comp) => {
-    if (comp.core) return;
     if (!window.confirm(`¿Eliminar la competencia "${comp.nombre}" del catálogo?`)) return;
     setCatalog((c) => ({
       ...c,
@@ -273,7 +272,7 @@ export default function CatalogPage() {
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Catálogo de Proyectos</h1>
             <p className="text-sm text-gray-500">
-              Grupos, competencias obligatorias y proyectos por Grupo × Nivel.
+              Grupos, competencias y proyectos por Grupo × Nivel.
             </p>
           </div>
         </div>
@@ -379,7 +378,7 @@ export default function CatalogPage() {
               <Sparkles size={16} className="text-brand-600" />
               <h2 className="text-sm font-semibold text-gray-800">Competencias</h2>
               <span className="text-xs text-gray-400">
-                (las 5 obligatorias no se pueden eliminar)
+                (define las competencias de tu plan; se crean solas al importar un archivo)
               </span>
             </div>
 
@@ -391,19 +390,13 @@ export default function CatalogPage() {
                     onChange={(e) => renameCompetencia(c.id, e.target.value)}
                     className="flex-1 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
-                  {c.core ? (
-                    <span className="text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-                      Obligatoria
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => removeCompetencia(c)}
-                      className="text-gray-400 hover:text-rose-600 p-1.5"
-                      title="Eliminar competencia"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => removeCompetencia(c)}
+                    className="text-gray-400 hover:text-rose-600 p-1.5"
+                    title="Eliminar competencia"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -423,6 +416,26 @@ export default function CatalogPage() {
                 <Plus size={14} /> Añadir
               </button>
             </div>
+          </section>
+
+          {/* ---------- Documentos ---------- */}
+          <section className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText size={16} className="text-brand-600" />
+              <h2 className="text-sm font-semibold text-gray-800">Documentos</h2>
+              <span className="text-xs text-gray-400">(PDF, Excel y vista "Ver")</span>
+            </div>
+            <label className="block max-w-xl">
+              <span className="text-xs text-gray-500">
+                Materia que se muestra cuando un alumno no tiene materia asignada
+              </span>
+              <input
+                value={catalog.materiaDefault || ''}
+                placeholder="p. ej. LECTOESCRITURA (vacío = CODE)"
+                onChange={(e) => setCatalog((c) => ({ ...c, materiaDefault: e.target.value }))}
+                className="mt-1 w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </label>
           </section>
 
           {/* ---------- Matriz ---------- */}

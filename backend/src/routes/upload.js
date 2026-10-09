@@ -210,8 +210,10 @@ router.post(
       const snapEdit = (previo && !reubicado && previo.proyectoAsignado) || {};
 
       // Materia: si la fila ya trae texto se conserva; si no, la que ya tenía
-      // el alumno o la de la celda; solo si no hay texto alguno se añade CODE.
-      const materiaFinal = materiaFila || materiaPrevia || snap.materia || 'CODE';
+      // el alumno o la de la celda; solo si no hay texto alguno se añade el
+      // respaldo del usuario (materiaDefault) o CODE.
+      const materiaFinal =
+        materiaFila || materiaPrevia || snap.materia || catalog.materiaDefault || 'CODE';
       student = {
         ...student,
         proyectoAsignado: {

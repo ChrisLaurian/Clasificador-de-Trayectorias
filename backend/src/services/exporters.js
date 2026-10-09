@@ -162,7 +162,7 @@ function generateStudentXLSX(student, options = {}) {
   const materia =
     p.materia !== null && p.materia !== undefined && String(p.materia).trim() !== ''
       ? String(p.materia).trim()
-      : 'CODE';
+      : options.materiaDefault || 'CODE';
   const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
   const grupoTxt = [student.grupo, grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '']
     .filter(Boolean)
@@ -325,7 +325,7 @@ function generateStudentHTML(student, options = {}) {
   const materia =
     p.materia !== null && p.materia !== undefined && String(p.materia).trim() !== ''
       ? String(p.materia).trim()
-      : 'CODE';
+      : options.materiaDefault || 'CODE';
   const grupoCfg = grupos.find((g) => g.codigo === student.grupo);
   const grupoTxt = [student.grupo, grupoCfg && grupoCfg.etiqueta ? grupoCfg.etiqueta : '']
     .filter(Boolean)

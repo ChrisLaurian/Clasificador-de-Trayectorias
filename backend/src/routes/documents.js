@@ -15,7 +15,11 @@ function safeFileName(name) {
 }
 
 function pdfOptions(catalog) {
-  return { competencias: catalog.competencias, grupos: catalog.grupos };
+  return {
+    competencias: catalog.competencias,
+    grupos: catalog.grupos,
+    materiaDefault: catalog.materiaDefault,
+  };
 }
 
 // GET /api/documents/student/:id/xlsx -> Excel individual (formato TIA)

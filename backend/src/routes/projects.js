@@ -62,14 +62,6 @@ function validateCompetencias(competencias) {
   if (competencias.some((c) => !String(c.nombre || '').trim())) {
     return 'Todas las competencias deben tener nombre';
   }
-  const faltantes = db.CORE_COMPETENCIAS.filter(
-    (core) => !competencias.some((c) => c.id === core.id)
-  );
-  if (faltantes.length) {
-    return `No se pueden eliminar las competencias obligatorias: ${faltantes
-      .map((c) => c.nombre)
-      .join(', ')}`;
-  }
   return null;
 }
 
@@ -100,6 +92,8 @@ router.put(
     const nextGrupos = esArreglo ? actual.grupos : body.grupos || actual.grupos;
     const nextCompetencias = esArreglo ? actual.competencias : body.competencias || actual.competencias;
     const nextProyectos = esArreglo ? body : body.proyectos || actual.proyectos;
+    const nextMateriaDefault =
+      esArreglo || body.materiaDefault === undefined ? actual.materiaDefault : body.materiaDefault;
 
     const error =
       validateGrupos(nextGrupos) ||
@@ -122,6 +116,7 @@ router.put(
       grupos: nextGrupos,
       competencias: nextCompetencias,
       proyectos: nextProyectos,
+      materiaDefault: nextMateriaDefault,
     });
 
     // Sincroniza los snapshots de los alumnos con la lista de competencias.

@@ -267,7 +267,7 @@ export default function StudentsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
-                    {s.proyectoAsignado?.materia || 'CODE'}
+                    {s.proyectoAsignado?.materia || catalog.materiaDefault || 'CODE'}
                   </td>
                   <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
                     {s.proyectoAsignado?.dominioDisciplinar || '—'}

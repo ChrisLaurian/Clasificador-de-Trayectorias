@@ -30,8 +30,9 @@ const COL_STYLES = [
 const BORDER = '#4b5563';
 const NAVY = '#1f3864';
 
-// Materia por defecto: si el alumno no trae texto de materia en su proyecto,
-// se muestra CODE como respaldo (si hay texto, se respeta el que ya exista).
+// Materia de respaldo: si el alumno no trae texto de materia en su proyecto,
+// se muestra la del catálogo del usuario (materiaDefault) o CODE como última
+// opción (si hay texto, se respeta el que ya exista).
 const MATERIA = 'CODE';
 
 function colX(index) {
@@ -68,11 +69,11 @@ function generateStudentPDF(student, options = {}) {
 
       const p = student.proyectoAsignado || {};
       const contenido = p.competencias || {};
-      // La materia del alumno; vacía -> CODE como respaldo.
+      // La materia del alumno; vacía -> respaldo del usuario (o CODE).
       const materiaTxt =
         p.materia !== null && p.materia !== undefined && String(p.materia).trim() !== ''
           ? String(p.materia).trim()
-          : MATERIA;
+          : options.materiaDefault || MATERIA;
       const pageBottom = () => doc.page.height - MARGIN - 18;
       const pageWidth = doc.page.width - MARGIN * 2;
 

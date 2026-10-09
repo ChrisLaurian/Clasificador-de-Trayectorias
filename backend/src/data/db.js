@@ -44,7 +44,8 @@ const DEFAULT_GRUPOS = [
   { codigo: 'F', etiqueta: 'F · ~15 años', edad: 15 },
 ];
 
-// Competencias obligatorias (si o si deben existir; no se pueden eliminar).
+// Competencias base: vienen en el seed del catálogo. Cada usuario define las
+// suyas (se pueden editar/eliminar; el seed por defecto trae estas 5).
 const CORE_COMPETENCIAS = [
   { id: 'abstraccion', nombre: 'Abstracción', core: true },
   { id: 'pensamiento_logico', nombre: 'Pensamiento lógico-matemático', core: true },
@@ -132,13 +133,16 @@ function normalizeCatalog(raw) {
     raw.competencias = clone(CORE_COMPETENCIAS);
     dirty = true;
   }
-  // Las competencias obligatorias siempre están presentes.
-  CORE_COMPETENCIAS.forEach((core) => {
-    if (!raw.competencias.some((c) => c.id === core.id)) {
-      raw.competencias.unshift(clone(core));
-      dirty = true;
-    }
-  });
+  // Las competencias las define cada usuario (el seed por defecto trae las
+  // base del sistema; no se re-inyectan para permitir perfiles propios,
+  // p. ej. un plan de lectoescritura).
+
+  // Materia que se muestra en los documentos cuando un alumno no tiene materia.
+  const materiaDefault = String(raw.materiaDefault || '').trim();
+  if (raw.materiaDefault !== materiaDefault) {
+    raw.materiaDefault = materiaDefault;
+    dirty = true;
+  }
 
   if (!Array.isArray(raw.proyectos)) {
     raw.proyectos = [];
@@ -387,12 +391,13 @@ module.exports = {
 
   // datos por usuario
   getCatalog: loadCatalog,
-  saveCatalog: async (uid, { grupos, competencias, proyectos }) => {
+  saveCatalog: async (uid, { grupos, competencias, proyectos, materiaDefault }) => {
     const actual = await loadCatalog(uid);
     const next = normalizeCatalog({
       grupos: grupos || actual.grupos,
       competencias: competencias || actual.competencias,
       proyectos: proyectos || actual.proyectos,
+      materiaDefault: materiaDefault !== undefined ? materiaDefault : actual.materiaDefault,
     }).catalog;
     await writeUserCatalog(uid, next);
     return next;

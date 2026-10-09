@@ -134,9 +134,14 @@ Notas de la nube (plan Hobby):
    - **Grupos**: A–F vienen por defecto y se pueden editar (etiqueta, edad) o
      eliminar; el botón **"Añadir grupo"** pide el nombre y listo (el código se
      genera solo, p. ej. `1° Primaria` → `1PRIMARIA`).
-   - **Competencias**: vienen 5 obligatorias (Abstracción, Pensamiento
-     lógico-matemático, Pensamiento computacional, Implementación técnica y
-     Competencias digitales) que no se pueden eliminar, más las que quieras añadir.
+   - **Competencias**: las define cada usuario. El catálogo arranca con las 5
+     base del sistema (Abstracción, Pensamiento lógico-matemático, Pensamiento
+     computacional, Implementación técnica y Competencias digitales), pero se
+     pueden editar o eliminar (p. ej. un plan de lectoescritura con Gramática,
+     Comprensión lectora, etc.) y al importar un archivo se crean las que falten.
+   - **Documentos (materia de respaldo)**: el campo define qué materia se
+     muestra en PDF/Excel/vista cuando un alumno no tiene materia asignada
+     (vacío = `CODE`).
    - **Matriz Grupo × Nivel**: al hacer click en una celda (Básico, Intermedio o
      Avanzado) se abre un **modal** con materia, dominio disciplinar, meta
      general y, por competencia: descripción base del alumno, Trimestre 1–3 y Meta.
@@ -156,7 +161,8 @@ Notas de la nube (plan Hobby):
    antes de los encabezados (p. ej. `GRUPO A1`), filas vacías y acentos o
    mayúsculas variadas (`Básico`, `basico`, `Intermeio`...); el nivel se toma
    por la inicial (**B**, **I**, **A**). La **materia** respeta el texto que
-   ya traiga el alumno o el archivo y solo añade `CODE` como respaldo si no hay
+   ya traiga el alumno o el archivo y solo añade la materia de respaldo del
+   usuario (`CODE` si está vacía) si no hay
    texto. Si el alumno ya existe (mismo nombre) **se actualiza en lugar de
    duplicarlo** (las filas vacías conservan lo que ya tenía). Si el archivo
    **no trae columna `nombre`**, el nombre del alumno se toma del **nombre del
@@ -165,10 +171,10 @@ Notas de la nube (plan Hobby):
    editar el perfil y **cada competencia por separado** (sin afectar el catálogo).
    El botón "Restaurar del catálogo" vuelve a los valores maestros.
 4. **Documentos y exportación**
-   - PDF individual en formato oficial TIA: Datos Generales, Perfil y tabla de
-     competencias con columna de Materia combinada (A4 apaisado, con
-     paginación). La Materia muestra el texto real del alumno; si está vacío,
-     `CODE`.
+    - PDF individual en formato oficial TIA: Datos Generales, Perfil y tabla de
+      competencias con columna de Materia combinada (A4 apaisado, con
+      paginación). La Materia muestra el texto real del alumno; si está vacío,
+      la materia de respaldo del usuario (`CODE` por defecto).
    - Excel individual (.xlsx) con el mismo contenido y estilo del PDF TIA
      (título y secciones en azul navy, tabla coloreada con bordes, materia
      combinada en vertical, sin fechas ni edad), descargable por alumno desde
@@ -211,9 +217,10 @@ Notas de la nube (plan Hobby):
 - **PDF**: generado con `pdfkit` en A4 apaisado, en el formato oficial
   "Plan de Proyecto Educativo Individual" (TIA): secciones 1. Datos Generales
   (nombre y grupo) y 2. Perfil (intereses, tipo de aprendizaje, fortalezas,
-  áreas de mejora), más la tabla oficial de 7 columnas (Dominio disciplinar ·
-  Descripción diagnóstica · Materia combinada —fija en **CODE** mientras todas
-  las trayectorias sean de esa materia— · Trimestre 1-3 · Meta general), celdas
+   áreas de mejora), más la tabla oficial de 7 columnas (Dominio disciplinar ·
+   Descripción diagnóstica · Materia combinada —el texto del alumno o, si está
+   vacío, la materia de respaldo del catálogo (`CODE` por defecto)— ·
+   Trimestre 1-3 · Meta general), celdas
   de altura dinámica, saltos de página con encabezado repetido y pie con número
   de página. El tipo de aprendizaje se elige con un selector (VARK: Visual,
   Auditivo, Lectura/Escritura, Kinestésico) en el panel de cada alumno.
